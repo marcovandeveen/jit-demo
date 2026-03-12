@@ -437,7 +437,7 @@
     <!-- ── Stitch ── -->
     <div class="player-col">
       <div class="col-head">
-        <h2 id="col-title-stitch">Standard SSAI — Stitch Mode</h2>
+        <h2 id="col-title-stitch">Standard Insertion</h2>
         <div class="badge-row">
           <span class="mode-badge stitch" id="mode-badge-stitch">ad_config_id=a86peaQZ</span>
           <div class="col-meta" id="col-meta-stitch"></div>
@@ -667,7 +667,7 @@ function applyDetectedMode(id) {
     subEl.textContent   = 'Ad requests are made only when the player reaches each break — zero wasted stitching.';
     if (noteEl) noteEl.textContent = 'Ads are stitched just before playing the ad — render rate is always close to 100%';
   } else {
-    titleEl.textContent = 'Standard SSAI — Stitch Mode';
+    titleEl.textContent = 'Standard Insertion';
     badgeEl.className   = 'mode-badge stitch';
     subEl.textContent   = 'All ads are stitched into the manifest upfront — even if they\'re never watched.';
     if (noteEl) noteEl.textContent = `${BREAK_LABELS.length} ads stitched upfront — only reaches 100% if viewer watches every break`;
