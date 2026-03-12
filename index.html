@@ -372,12 +372,31 @@
     }
     @media (max-width: 660px) {
       :root { --page-pad: 16px; }
-      .players-grid { grid-template-columns: 1fr; }
+      .players-grid { grid-template-columns: 1fr; gap: 12px; }
       .header { gap: 16px; }
       .header-logo { height: 68px; }
       .benefits-bar { flex-direction: column; }
       .benefit-divider { display: none; }
       .media-chooser { flex-wrap: wrap; }
+
+      /* ── Compact mode: fit both players + manifests on screen ── */
+      /* Hide subtitle descriptions */
+      .col-head .subtitle { display: none; }
+      /* Hide label badges (adconfig, hosting type, stitch mode) */
+      .badge-row { display: none; }
+      /* Hide Live Session Data panels */
+      .session-panel { display: none; }
+      /* Tighten col-head */
+      .col-head { margin-bottom: 6px; }
+      .col-head h2 { font-size: 1rem; margin-bottom: 0; }
+      /* Tighten timeline card */
+      .timeline-card { padding: 8px 10px; }
+      .timeline-title { font-size: 0.72rem; margin-bottom: 6px; }
+      .timeline-legend { gap: 8px; margin-top: 6px; font-size: 0.68rem; }
+      .render-row { margin-top: 6px; }
+      .render-note { display: none; }
+      /* Tighten player section */
+      .players-section { padding: 12px var(--page-pad) 16px; }
     }
   </style>
 </head>
