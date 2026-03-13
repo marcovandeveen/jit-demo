@@ -217,7 +217,34 @@
       background: var(--navy); color: var(--white);
       font-size: 0.7rem; font-weight: 700;
       padding: 4px 10px; border-radius: 5px;
+      display: inline-block; position: relative;
     }
+
+    /* ── Ad-server request animation ── */
+    .timeline-title { position: relative; }
+
+    .req-dot {
+      position: absolute; top: 50%; left: 0;
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--blue);
+      box-shadow: -10px 0 8px rgba(71,144,205,.45), 0 0 6px var(--blue);
+      transform: translateY(-50%) scale(0.4);
+      opacity: 0; pointer-events: none; z-index: 5;
+    }
+    @keyframes reqDotFly {
+      0%   { left: 0;                  opacity: 0;   transform: translateY(-50%) scale(0.4); }
+      10%  {                           opacity: 1;   transform: translateY(-50%) scale(1);   }
+      85%  {                           opacity: 1; }
+      100% { left: calc(100% - 86px); opacity: 0;   transform: translateY(-50%) scale(0.4); }
+    }
+    .req-dot.fly { animation: reqDotFly 0.38s ease-in forwards; }
+
+    @keyframes serverHit {
+      0%   { background: var(--blue); transform: scale(1.12); box-shadow: 0 0 0 0   rgba(71,144,205,.9); }
+      45%  {                          transform: scale(1.04); box-shadow: 0 0 0 8px rgba(71,144,205,0);  }
+      100% { background: var(--navy); transform: scale(1);    box-shadow: none; }
+    }
+    .ad-server-box.hit { animation: serverHit 0.65s ease forwards; }
 
     .timeline-track {
       display: flex; height: 32px; gap: 3px; position: relative;
@@ -479,9 +506,9 @@
 
       <!-- Timeline -->
       <div class="timeline-card">
-        <div class="timeline-title">
+        <div class="timeline-title" id="ad-title-stitch">
           <span>Video Manifest</span>
-          <span class="ad-server-box">Ad Server</span>
+          <span class="ad-server-box" id="adserver-stitch">Ad Server</span>
         </div>
         <div style="position:relative">
           <div class="timeline-track" id="track-stitch">
@@ -549,9 +576,9 @@
 
       <!-- Timeline -->
       <div class="timeline-card">
-        <div class="timeline-title">
+        <div class="timeline-title" id="ad-title-jit">
           <span>Video Manifest</span>
-          <span class="ad-server-box">Ad Server</span>
+          <span class="ad-server-box" id="adserver-jit">Ad Server</span>
         </div>
         <div style="position:relative">
           <!-- JIT fetch toast notification -->
@@ -830,6 +857,11 @@ function initPlayer(id, url) {
         }
         applyDetectedMode(id);
       }
+      // Non-JIT: all 3 ad breaks are requested immediately at manifest load
+      // Fire staggered ad-server request animations to show upfront stitching
+      if (!isJITMode(id)) {
+        [400, 650, 900].forEach(delay => setTimeout(() => animateAdRequest(id), delay));
+      }
       if (sid) startSessionTracking(null, id, sid, infoUrl);
     });
   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -944,6 +976,9 @@ function triggerJITFetch(i) {
   const el = document.getElementById(`jit-b${i}`);
   if (!el) return;
 
+  // 0) Animate ad server request
+  animateAdRequest('jit');
+
   // 1) Show "fetching" state
   el.className = 't-ad fetching';
 
@@ -958,6 +993,26 @@ function triggerJITFetch(i) {
     updateJITRenderBar();
     refreshSessionPanel('jit');
   }, 650);
+}
+
+function animateAdRequest(mode) {
+  const titleEl  = document.getElementById('ad-title-'  + mode);
+  const serverEl = document.getElementById('adserver-'  + mode);
+  if (!titleEl || !serverEl) return;
+  // Create a flying dot and append it to the title row
+  const dot = document.createElement('span');
+  dot.className = 'req-dot';
+  titleEl.appendChild(dot);
+  void dot.offsetWidth; // force reflow so animation starts fresh
+  dot.classList.add('fly');
+  // When dot arrives, flash the Ad Server box
+  setTimeout(() => {
+    dot.remove();
+    serverEl.classList.remove('hit');
+    void serverEl.offsetWidth;
+    serverEl.classList.add('hit');
+    setTimeout(() => serverEl.classList.remove('hit'), 700);
+  }, 340);
 }
 
 function showFetchToast(label) {
