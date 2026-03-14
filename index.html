@@ -602,7 +602,7 @@
           <div class="render-track"><div class="render-fill" id="stitch-rf" style="width:0%;background:#E74C3C;transition:width 1.2s ease"></div></div>
           <div class="render-pct"   id="stitch-rp" style="color:#E74C3C">—</div>
         </div>
-        <div class="render-note" id="render-note-stitch">3 ads stitched upfront — only reaches 100% if viewer watches every break</div>
+        <div class="render-note" id="render-note-stitch">Ads stitched upfront — only reaches 100% if viewer watches every break</div>
       </div>
 
       <!-- Session JSON collapsible -->
@@ -819,7 +819,7 @@ function applyDetectedMode(id) {
     titleEl.textContent = 'Standard Insertion';
     if (badgeEl) badgeEl.className = 'mode-badge stitch';
     subEl.textContent   = 'All ads are stitched into the manifest upfront — even if they\'re never watched.';
-    if (noteEl) noteEl.textContent = `${BREAK_LABELS.length} ads stitched upfront — only reaches 100% if viewer watches every break`;
+    if (noteEl) noteEl.textContent = 'Ads stitched upfront — only reaches 100% if viewer watches every break';
   }
 
   updateColMeta(id);
