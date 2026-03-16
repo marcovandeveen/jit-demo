@@ -942,7 +942,7 @@ function initPlayer(id, url) {
   }
 
   if (Hls.isSupported()) {
-    const hls = new Hls({ maxBufferLength: 30, enableWorker: false });
+    const hls = new Hls({ maxBufferLength: 12, maxMaxBufferLength: 12, enableWorker: false });
     hls.loadSource(url);
     hls.attachMedia(video);
     hlsInstances[id] = hls;
