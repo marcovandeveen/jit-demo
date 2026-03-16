@@ -1305,8 +1305,8 @@ function renderSessionPanel(mode, liveData) {
       if (!el || el.classList.contains('impressed')) return; // never downgrade impressed
       const hasAds = Array.isArray(b.ads) && b.ads.length > 0;
       const noFill = Array.isArray(b.ads) && b.ads.length === 0;
-      // JIT: use ads_requested flag; Stitch: simulate ad_returned (backend bug — infer from non-empty ads)
-      const adReturned = mode === 'jit' ? (!!b.ads_requested && hasAds) : hasAds;
+      // Both JIT and Stitch: infer from non-empty ads array (ads_requested is buggy on both sides — always true)
+      const adReturned = hasAds;
       if (noFill) {
         el.className = 't-ad unfilled'; el.textContent = 'No fill';
       } else if (adReturned && !el.classList.contains('fetched') && !el.classList.contains('fetching')) {
