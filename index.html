@@ -266,6 +266,15 @@
       min-width: 16px; text-align: center;
       vertical-align: middle;
     }
+    .manifest-mode-badge {
+      display: inline-block;
+      font-size: 0.6rem; font-weight: 700;
+      padding: 1px 5px; border-radius: 3px;
+      vertical-align: middle; margin-left: 4px;
+      opacity: 0; transition: opacity .3s;
+    }
+    .manifest-mode-badge.jit  { background: var(--blue); color: var(--white); opacity: 1; }
+    .manifest-mode-badge.ssai { background: var(--navy); color: var(--white); opacity: 1; }
 
     .timeline-track {
       display: flex; height: 32px; gap: 3px; position: relative;
@@ -583,7 +592,7 @@
       <!-- Timeline -->
       <div class="timeline-card">
         <div class="timeline-title" id="ad-title-stitch">
-          <span>Video Manifest</span>
+          <span>Video Manifest <span class="manifest-mode-badge" id="manifest-badge-stitch"></span></span>
           <span class="ad-server-box" id="adserver-stitch">Ad Server<span class="adserver-count" id="adserver-count-stitch">0</span></span>
         </div>
         <div style="position:relative">
@@ -645,7 +654,7 @@
       <!-- Timeline -->
       <div class="timeline-card">
         <div class="timeline-title" id="ad-title-jit">
-          <span>Video Manifest</span>
+          <span>Video Manifest <span class="manifest-mode-badge" id="manifest-badge-jit"></span></span>
           <span class="ad-server-box" id="adserver-jit">Ad Server<span class="adserver-count" id="adserver-count-jit">0</span></span>
         </div>
         <div style="position:relative">
@@ -966,6 +975,18 @@ function initPlayer(id, url) {
           try { ssaiModes[id] = { raw: atob(strategyB64) }; } catch(_) {}
         }
         applyDetectedMode(id);
+      }
+      // Detect serving engine from final redirect URL
+      const finalUrl = data.url || '';
+      const manifestBadge = document.getElementById(`manifest-badge-${id}`);
+      if (manifestBadge) {
+        if (finalUrl.includes('ssai-jit.jwplayer.com')) {
+          manifestBadge.textContent = 'JIT';
+          manifestBadge.className   = 'manifest-mode-badge jit';
+        } else if (finalUrl.includes('ssai.jwplayer.com')) {
+          manifestBadge.textContent = 'SSAI';
+          manifestBadge.className   = 'manifest-mode-badge ssai';
+        }
       }
       // Switch timeline placeholder to animated "waiting" state
       const track = document.getElementById(`track-${id}`);
@@ -1364,6 +1385,8 @@ function teardownMode(id) {
   if (sjcChev) sjcChev.classList.remove('open');
   const countEl = document.getElementById(`adserver-count-${id}`);
   if (countEl) countEl.textContent = '0';
+  const manifestBadge = document.getElementById(`manifest-badge-${id}`);
+  if (manifestBadge) { manifestBadge.textContent = ''; manifestBadge.className = 'manifest-mode-badge'; }
 
   document.getElementById(`prog-${id}`).value = 0;
   document.getElementById(`time-${id}`).textContent = '0:00 / 0:00';
