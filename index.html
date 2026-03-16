@@ -275,6 +275,11 @@
     }
     .manifest-mode-badge.jit  { background: var(--blue); color: var(--white); opacity: 1; }
     .manifest-mode-badge.ssai { background: var(--navy); color: var(--white); opacity: 1; }
+    .load-defaults-link {
+      font-size: 0.7rem; color: var(--muted); cursor: pointer;
+      margin-left: 2px; white-space: nowrap;
+    }
+    .load-defaults-link:hover { text-decoration: underline; color: var(--text); }
 
     .timeline-track {
       display: flex; height: 32px; gap: 3px; position: relative;
@@ -554,10 +559,11 @@
     <span class="media-label">Site ID</span>
     <input type="text" id="siteIdInput" class="media-input" value="CRhqa29o" spellcheck="false">
     <span class="media-label">Media ID</span>
-    <input type="text" id="mediaIdInput" class="media-input" value="O8PHs6Jz" spellcheck="false">
+    <input type="text" id="mediaIdInput" class="media-input" value="jUnzhbbH" spellcheck="false">
     <span class="media-label">Ad Config</span>
     <input type="text" id="adConfigInput" class="media-input" value="LIvxq0u2" spellcheck="false">
     <span id="hosting-badge" class="meta-badge" style="display:none"></span>
+    <span id="loadDefaultsLink" class="load-defaults-link">load defaults</span>
   </div>
 </div>
 
@@ -724,9 +730,11 @@
 /* ============================================================
    CONFIG
    ============================================================ */
-let currentSiteId     = 'CRhqa29o'; // overridden by #siteIdInput on load
-let currentMediaId    = 'O8PHs6Jz'; // overridden by #mediaIdInput on load
-let currentAdConfigId = 'LIvxq0u2'; // overridden by #adConfigInput on load
+const DEFAULTS = { siteId: 'CRhqa29o', mediaId: 'jUnzhbbH', adConfigId: 'LIvxq0u2' };
+
+let currentSiteId     = DEFAULTS.siteId;
+let currentMediaId    = DEFAULTS.mediaId;
+let currentAdConfigId = DEFAULTS.adConfigId;
 
 // stitch_mode per column: driven by ?stitch_mode= page URL param.
 // Default (no param) → comparison mode: stitch=ssai, jit=jit.
@@ -1237,7 +1245,12 @@ function scheduleAdAnimations(mode, breaks) {
     const count = breaks.length;
     if (count === 0) { markDone(); return; }
     // Standard: stagger all breaks; mark done after last block fills
-    breaks.forEach((_, i) => {
+    breaks.forEach((b, i) => {
+      // Skip animation for unfilled breaks (no ads — session data already set pill to unfilled)
+      if (Array.isArray(b.ads) && b.ads.length === 0) {
+        if (i === count - 1) markDone();
+        return;
+      }
       setTimeout(() => {
         triggerFetch('stitch', i);
         // Preroll (break 0 at time_offset 0): segments already buffered → impression fires on load
@@ -1286,11 +1299,19 @@ function renderSessionPanel(mode, liveData) {
     // Sync break timing constants to real session offsets (once per load)
     syncBreakTimings(breaks);
 
-    // Mark 0-fill breaks as unfilled on the timeline block
+    // Update pill states from live session data
     breaks.forEach((b, i) => {
-      if (b.ads && b.ads.length === 0) {
-        const el = document.getElementById(`${mode}-b${i}`);
-        if (el) { el.className = 't-ad unfilled'; el.textContent = 'No fill'; }
+      const el = document.getElementById(`${mode}-b${i}`);
+      if (!el || el.classList.contains('impressed')) return; // never downgrade impressed
+      const hasAds = Array.isArray(b.ads) && b.ads.length > 0;
+      const noFill = Array.isArray(b.ads) && b.ads.length === 0;
+      // JIT: use ads_requested flag; Stitch: simulate ad_returned (backend bug — infer from non-empty ads)
+      const adReturned = mode === 'jit' ? (!!b.ads_requested && hasAds) : hasAds;
+      if (noFill) {
+        el.className = 't-ad unfilled'; el.textContent = 'No fill';
+      } else if (adReturned && !el.classList.contains('fetched') && !el.classList.contains('fetching')) {
+        el.className = 't-ad fetched'; el.textContent = 'Ad';
+        if (mode === 'jit' && !jitFetched[i]) { jitFetched[i] = true; updateRenderBar(mode); }
       }
     });
   }
@@ -1428,12 +1449,41 @@ function teardownAll() {
   renderSessionPanel('jit',    null);
 }
 
+/* ---- Cookie helpers ---- */
+const COOKIE_NAME = 'jit_demo_settings';
+function saveCookieSettings() {
+  const val = [
+    encodeURIComponent(document.getElementById('siteIdInput').value   || DEFAULTS.siteId),
+    encodeURIComponent(document.getElementById('mediaIdInput').value  || DEFAULTS.mediaId),
+    encodeURIComponent(document.getElementById('adConfigInput').value || DEFAULTS.adConfigId),
+  ].join('|');
+  document.cookie = `${COOKIE_NAME}=${val};max-age=${60*60*24*365};path=/`;
+}
+function loadCookieSettings() {
+  const match = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith(COOKIE_NAME + '='));
+  if (!match) return;
+  const parts = match.slice(COOKIE_NAME.length + 1).split('|').map(decodeURIComponent);
+  if (parts[0]) { currentSiteId     = parts[0]; document.getElementById('siteIdInput').value   = parts[0]; }
+  if (parts[1]) { currentMediaId    = parts[1]; document.getElementById('mediaIdInput').value  = parts[1]; }
+  if (parts[2]) { currentAdConfigId = parts[2]; document.getElementById('adConfigInput').value = parts[2]; }
+}
+function resetToDefaults() {
+  currentSiteId     = DEFAULTS.siteId;
+  currentMediaId    = DEFAULTS.mediaId;
+  currentAdConfigId = DEFAULTS.adConfigId;
+  document.getElementById('siteIdInput').value   = DEFAULTS.siteId;
+  document.getElementById('mediaIdInput').value  = DEFAULTS.mediaId;
+  document.getElementById('adConfigInput').value = DEFAULTS.adConfigId;
+  document.cookie = `${COOKIE_NAME}=;max-age=0;path=/`; // clear cookie
+}
+
 function loadMedia(mid) {
   mid = (mid || '').trim();
   if (!mid) return;
   currentSiteId     = (document.getElementById('siteIdInput')?.value  || '').trim() || currentSiteId;
   currentAdConfigId = (document.getElementById('adConfigInput')?.value || '').trim() || currentAdConfigId;
   currentMediaId    = mid;
+  saveCookieSettings();
 
   teardownAll();
 
@@ -1455,12 +1505,19 @@ document.getElementById('btnLoad').addEventListener('click', () => {
     if (e.key === 'Enter') loadMedia(document.getElementById('mediaIdInput').value || currentMediaId);
   });
 });
+document.getElementById('loadDefaultsLink').addEventListener('click', () => {
+  resetToDefaults();
+  loadMedia(DEFAULTS.mediaId);
+});
 
 /* ============================================================
    BOOT
    ============================================================ */
 window.addEventListener('DOMContentLoaded', () => {
-  // Pre-populate inputs from URL query params
+  // Restore settings from cookie (lowest priority)
+  loadCookieSettings();
+
+  // URL query params override cookie (highest priority)
   // Supported: ?site_id=&media_id=&ad_config_id=&stitch_mode=jit|ssai
   const params = new URLSearchParams(window.location.search);
   if (params.get('site_id'))      { currentSiteId     = params.get('site_id');      document.getElementById('siteIdInput').value   = currentSiteId; }
