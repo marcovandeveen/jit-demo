@@ -1300,19 +1300,29 @@ function renderSessionPanel(mode, liveData) {
     syncBreakTimings(breaks);
 
     // Update pill states from live session data
+    // JIT:    pending → ads_requested=false | fetched → ads_requested=true | no fill → ads_requested=true + ads null/empty
+    // Stitch: simulate ads_requested=true — pending → ads null/undefined | fetched → ads non-empty | no fill → ads empty []
     breaks.forEach((b, i) => {
       const el = document.getElementById(`${mode}-b${i}`);
       if (!el || el.classList.contains('impressed')) return; // never downgrade impressed
-      const hasAds = Array.isArray(b.ads) && b.ads.length > 0;
-      const noFill = Array.isArray(b.ads) && b.ads.length === 0;
-      // JIT: ads_requested drives fetched state (pending until flag flips true)
-      // Stitch: infer from non-empty ads array (ads_requested buggy on stitch side — always true)
-      const adReturned = mode === 'jit' ? (!!b.ads_requested && hasAds) : hasAds;
-      if (noFill) {
-        el.className = 't-ad unfilled'; el.textContent = 'No fill';
-      } else if (adReturned && !el.classList.contains('fetched') && !el.classList.contains('fetching')) {
-        el.className = 't-ad fetched'; el.textContent = 'Ad';
-        if (mode === 'jit' && !jitFetched[i]) { jitFetched[i] = true; updateRenderBar(mode); }
+
+      if (mode === 'jit') {
+        if (!b.ads_requested) return; // pending — wait for flag to flip
+        const hasAds = Array.isArray(b.ads) && b.ads.length > 0;
+        if (!hasAds) {
+          el.className = 't-ad unfilled'; el.textContent = 'No fill'; // ads_requested=true but null/empty ads
+        } else if (!el.classList.contains('fetched') && !el.classList.contains('fetching')) {
+          el.className = 't-ad fetched'; el.textContent = 'Ad';
+          if (!jitFetched[i]) { jitFetched[i] = true; updateRenderBar(mode); }
+        }
+      } else {
+        // Stitch: ads_requested simulated as always true
+        if (b.ads == null) return; // null/undefined → not yet processed, stay pending
+        if (b.ads.length === 0) {
+          el.className = 't-ad unfilled'; el.textContent = 'No fill';
+        } else if (!el.classList.contains('fetched') && !el.classList.contains('fetching')) {
+          el.className = 't-ad fetched'; el.textContent = 'Ad';
+        }
       }
     });
   }
