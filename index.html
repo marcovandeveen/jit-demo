@@ -281,6 +281,51 @@
     }
     .load-defaults-link:hover { text-decoration: underline; color: var(--text); }
 
+    /* ── Buffer / Manifest toggle pills ── */
+    .tl-toggles { display: flex; gap: 6px; align-items: center; }
+    .tl-toggle {
+      font-size: 0.6rem; font-weight: 600; color: var(--muted);
+      cursor: pointer; padding: 2px 7px; border-radius: 3px;
+      border: 1px solid var(--g3); transition: color .15s, border-color .15s;
+      user-select: none;
+    }
+    .tl-toggle:hover { color: var(--text); border-color: var(--muted); }
+    .tl-toggle.active { color: var(--blue); border-color: var(--blue); }
+
+    /* ── Buffer bar (absolute overlay on timeline track) ── */
+    .buffer-bar {
+      position: absolute; top: 0; left: 0; height: 32px; width: 0%;
+      background: rgba(0, 149, 255, 0.10);
+      border-right: 2px solid rgba(0, 149, 255, 0.45);
+      border-radius: 5px 0 0 5px;
+      pointer-events: none; z-index: 5;
+      transition: width .35s linear;
+    }
+    .buffer-float {
+      position: absolute; right: -22px; top: 50%; transform: translateY(-50%);
+      background: rgba(0, 149, 255, 0.85); color: #fff;
+      font-size: 0.55rem; font-weight: 700; padding: 1px 4px;
+      border-radius: 3px; white-space: nowrap; pointer-events: none;
+      z-index: 6;
+    }
+
+    /* ── Manifest URL row ── */
+    .manifest-url-row {
+      background: var(--g1); border-radius: 6px;
+      padding: 7px 14px; margin-top: 4px;
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+    .murl-label {
+      font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--muted); flex-shrink: 0;
+      padding-top: 1px;
+    }
+    .murl-link {
+      font-family: monospace; font-size: 0.7rem; color: var(--blue);
+      word-break: break-all; text-decoration: none; line-height: 1.4;
+    }
+    .murl-link:hover { text-decoration: underline; }
+
     .timeline-track {
       display: flex; height: 32px; gap: 3px; position: relative;
       border-radius: 5px; overflow: visible;
@@ -599,9 +644,16 @@
       <div class="timeline-card">
         <div class="timeline-title" id="ad-title-stitch">
           <span>Video Manifest <span class="manifest-mode-badge" id="manifest-badge-stitch"></span></span>
+          <span class="tl-toggles">
+            <span class="tl-toggle" id="buf-toggle-stitch" onclick="toggleBufferBar('stitch')">Buffer</span>
+            <span class="tl-toggle" id="murl-toggle-stitch" onclick="toggleManifestUrl('stitch')">Manifest</span>
+          </span>
           <span class="ad-server-box" id="adserver-stitch">Ad Server<span class="adserver-count" id="adserver-count-stitch">0</span></span>
         </div>
         <div style="position:relative">
+          <div class="buffer-bar" id="buf-stitch" style="display:none">
+            <div class="buffer-float" id="buf-float-stitch">0s</div>
+          </div>
           <div class="timeline-track" id="track-stitch">
             <div class="timeline-placeholder">No video loaded</div>
           </div>
@@ -618,6 +670,12 @@
           <div class="render-pct"   id="stitch-rp" style="color:#E74C3C">—</div>
         </div>
         <div class="render-note" id="render-note-stitch">Ads stitched upfront — only reaches 100% if viewer watches every break</div>
+      </div>
+
+      <!-- Manifest URL row -->
+      <div class="manifest-url-row" id="murl-row-stitch" style="display:none">
+        <span class="murl-label">Manifest</span>
+        <a class="murl-link" id="murl-link-stitch" target="_blank" rel="noopener">—</a>
       </div>
 
       <!-- Session JSON collapsible -->
@@ -661,9 +719,16 @@
       <div class="timeline-card">
         <div class="timeline-title" id="ad-title-jit">
           <span>Video Manifest <span class="manifest-mode-badge" id="manifest-badge-jit"></span></span>
+          <span class="tl-toggles">
+            <span class="tl-toggle" id="buf-toggle-jit" onclick="toggleBufferBar('jit')">Buffer</span>
+            <span class="tl-toggle" id="murl-toggle-jit" onclick="toggleManifestUrl('jit')">Manifest</span>
+          </span>
           <span class="ad-server-box" id="adserver-jit">Ad Server<span class="adserver-count" id="adserver-count-jit">0</span></span>
         </div>
         <div style="position:relative">
+          <div class="buffer-bar" id="buf-jit" style="display:none">
+            <div class="buffer-float" id="buf-float-jit">0s</div>
+          </div>
           <!-- JIT fetch toast notification -->
           <div class="fetch-toast" id="fetch-toast">
             <div class="dot"></div>
@@ -686,6 +751,12 @@
           <div class="render-pct"   id="jit-rp" style="color:var(--green)">—</div>
         </div>
         <div class="render-note" id="render-note-jit">Ads are stitched just before playing the ad — render rate is always close to 100%</div>
+      </div>
+
+      <!-- Manifest URL row -->
+      <div class="manifest-url-row" id="murl-row-jit" style="display:none">
+        <span class="murl-label">Manifest</span>
+        <a class="murl-link" id="murl-link-jit" target="_blank" rel="noopener">—</a>
       </div>
 
       <!-- Session JSON collapsible -->
@@ -782,6 +853,7 @@ const stitchImpressed = [false, false, false]; // Stitch: ad segment played thro
 const streamDurations  = { stitch: null, jit: null }; // total stream duration from LEVEL_LOADED
 const lastSessionData  = { stitch: null, jit: null }; // cached to retry buildTimeline on LEVEL_LOADED
 const ssaiModes       = { stitch: null, jit: null }; // decoded x-jw-ssai-strategy-action per player
+const manifestUrls    = { stitch: null, jit: null }; // active manifest URL per player
 let mediaHostingType  = null; // 'Hosted' | 'External' from delivery API
 let breakTimingsUpdated = false; // guard for one-time timing update from live session data
 let pollTimers       = { stitch: null, jit: null };
@@ -934,6 +1006,10 @@ async function loadSessionInfo(sessionId, directUrl) {
    VIDEO PLAYERS (HLS.js)
    ============================================================ */
 function initPlayer(id, url) {
+  manifestUrls[id] = url;
+  const murlLink = document.getElementById(`murl-link-${id}`);
+  if (murlLink) { murlLink.href = url; murlLink.textContent = url; }
+
   const video = document.getElementById(`vid-${id}`);
 
   if (typeof Hls === 'undefined') {
@@ -1022,6 +1098,7 @@ function initPlayer(id, url) {
       const pct = (video.currentTime / video.duration) * 100;
       prog.value = pct;
       updatePlayhead(id, pct);
+      updateBufferBar(id, video);
       timeEl.textContent = `${fmt(video.currentTime)} / ${fmt(video.duration)}`;
 
       if (isJITMode(id)) checkJITTriggers(video.currentTime);
@@ -1065,6 +1142,35 @@ function toggleMute(id) {
 function updatePlayhead(id, pct) {
   const ph = document.getElementById(`ph-${id}`);
   if (ph) ph.style.left = Math.min(pct, 99) + '%';
+}
+
+function updateBufferBar(id, video) {
+  const bar = document.getElementById(`buf-${id}`);
+  if (!bar || bar.style.display === 'none' || !video.duration) return;
+  let bufEnd = 0;
+  for (let i = 0; i < video.buffered.length; i++) {
+    if (video.buffered.start(i) <= video.currentTime + 0.5)
+      bufEnd = Math.max(bufEnd, video.buffered.end(i));
+  }
+  bar.style.width = Math.min((bufEnd / video.duration) * 100, 100) + '%';
+  const floatEl = document.getElementById(`buf-float-${id}`);
+  if (floatEl) floatEl.textContent = Math.round(bufEnd - video.currentTime) + 's';
+}
+
+function toggleBufferBar(mode) {
+  const bar = document.getElementById(`buf-${mode}`);
+  const btn = document.getElementById(`buf-toggle-${mode}`);
+  const show = bar.style.display === 'none';
+  bar.style.display = show ? 'block' : 'none';
+  btn.classList.toggle('active', show);
+}
+
+function toggleManifestUrl(mode) {
+  const row = document.getElementById(`murl-row-${mode}`);
+  const btn = document.getElementById(`murl-toggle-${mode}`);
+  const show = row.style.display === 'none';
+  row.style.display = show ? 'flex' : 'none';
+  btn.classList.toggle('active', show);
 }
 
 /* ============================================================
@@ -1279,10 +1385,21 @@ function checkTimelinesReady() {
 function syncBreakTimings(breaks) {
   if (breakTimingsUpdated) return;
   breaks.forEach((b, i) => {
-    if (i < BREAK_IMPRESSION_THRESHOLDS.length) BREAK_IMPRESSION_THRESHOLDS[i] = b.time_offset;
-    if (i < BREAK_STREAM_TRIGGERS.length)       BREAK_STREAM_TRIGGERS[i] = Math.max(0, b.time_offset - 2.5);
-    if (i < BREAK_OFFSETS.length)               BREAK_OFFSETS[i] = b.time_offset;
+    BREAK_IMPRESSION_THRESHOLDS[i] = b.time_offset;
+    BREAK_STREAM_TRIGGERS[i]       = Math.max(0, b.time_offset - 2.5);
+    BREAK_OFFSETS[i]               = b.time_offset;
+    // Extend tracking arrays if this media has more breaks than the initial defaults
+    if (i >= jitFetched.length)      { jitFetched.push(false);      }
+    if (i >= jitImpressed.length)    { jitImpressed.push(false);    }
+    if (i >= stitchImpressed.length) { stitchImpressed.push(false); }
   });
+  // Trim arrays if this media has fewer breaks than the defaults
+  BREAK_IMPRESSION_THRESHOLDS.length = breaks.length;
+  BREAK_STREAM_TRIGGERS.length       = breaks.length;
+  BREAK_OFFSETS.length               = breaks.length;
+  jitFetched.length      = breaks.length;
+  jitImpressed.length    = breaks.length;
+  stitchImpressed.length = breaks.length;
   breakTimingsUpdated = true;
 }
 
@@ -1424,6 +1541,19 @@ function teardownMode(id) {
   document.getElementById(`time-${id}`).textContent = '0:00 / 0:00';
   updatePlayhead(id, 0);
   document.getElementById(`wrap-${id}`).classList.add('paused');
+
+  // Reset buffer bar
+  const bufBar = document.getElementById(`buf-${id}`);
+  if (bufBar) { bufBar.style.display = 'none'; bufBar.style.width = '0%'; }
+  document.getElementById(`buf-toggle-${id}`)?.classList.remove('active');
+
+  // Reset manifest URL row
+  const murlRow = document.getElementById(`murl-row-${id}`);
+  if (murlRow) murlRow.style.display = 'none';
+  document.getElementById(`murl-toggle-${id}`)?.classList.remove('active');
+  const murlLink = document.getElementById(`murl-link-${id}`);
+  if (murlLink) { murlLink.href = ''; murlLink.textContent = '—'; }
+  manifestUrls[id] = null;
 }
 
 function teardownAll() {
@@ -1437,7 +1567,13 @@ function teardownAll() {
   document.getElementById('btnSync').textContent = '▶\u00A0\u00A0Play Both';
   animsDone.stitch = false; animsDone.jit = false;
   pendingTimelines.stitch = null; pendingTimelines.jit = null;
-  jitFetched.fill(false); jitImpressed.fill(false); stitchImpressed.fill(false);
+  // Reset tracking arrays to 3-slot defaults (syncBreakTimings will resize on next load)
+  jitFetched.length = 3;      jitFetched.fill(false);
+  jitImpressed.length = 3;    jitImpressed.fill(false);
+  stitchImpressed.length = 3; stitchImpressed.fill(false);
+  BREAK_IMPRESSION_THRESHOLDS.length = 3;
+  BREAK_STREAM_TRIGGERS.length = 3;
+  BREAK_OFFSETS.length = 3;
   document.getElementById('jit-rf').style.width = '0%';
   document.getElementById('jit-rp').textContent = '—';
   document.getElementById('fetch-toast').classList.remove('show');
