@@ -88,8 +88,8 @@
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: 10px;
-      padding: 14px 56px;
+      gap: 8px 10px;
+      padding: 12px 56px;
       background: var(--g1);
       border-bottom: 1px solid var(--g2);
     }
@@ -471,7 +471,7 @@
     .dev-title { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); flex: 1; }
     .dev-chevron { font-size: 0.6rem; color: var(--muted); transition: transform .2s; }
     .dev-chevron.open { transform: rotate(180deg); }
-    .dev-body { padding: 12px 14px 4px; display: flex; flex-direction: column; gap: 0; border-top: 1px solid var(--g2); }
+    .dev-body { padding: 12px 14px 4px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--g2); }
     .dev-doc-link { font-size: 0.62rem; color: var(--blue); text-decoration: none; display: inline-block; margin-bottom: 12px; }
     .dev-doc-link:hover { text-decoration: underline; }
     .sjc-doc-link { font-size: 0.58rem; color: var(--blue); text-decoration: none; opacity: 0.7; flex-shrink: 0; margin-right: auto; }
@@ -507,7 +507,7 @@
     .resp-hdr-val a { color: var(--blue); text-decoration: none; }
     .resp-hdr-val a:hover { text-decoration: underline; }
     .sjc-header {
-      background: var(--g1); color: var(--muted); padding: 6px 12px;
+      background: var(--g1); color: var(--muted); padding: 9px 12px;
       display: flex; align-items: center; gap: 8px;
       cursor: pointer; user-select: none;
       border-bottom: 1px solid var(--g2);
@@ -597,7 +597,7 @@
     .footer-brand { color: rgba(255,255,255,.75); font-weight: 700; }
 
     /* ── Media chooser ── */
-    .media-chooser { display: flex; align-items: center; gap: 7px; margin-left: 4px; }
+    .media-chooser { display: flex; align-items: center; gap: 7px; flex-basis: 100%; }
     .media-label   { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
     .media-input {
       font-family: monospace; font-size: 0.8rem;
@@ -709,14 +709,11 @@
   <div class="media-chooser">
     <!-- View mode (default) -->
     <div class="media-view" id="media-view">
-      <span class="media-label">Site ID</span>
-      <span class="media-val" id="view-siteId">CRhqa29o</span>
-      <span class="media-sep">·</span>
-      <span class="media-label">Media ID</span>
-      <span class="media-val" id="view-mediaId">jUnzhbbH</span>
-      <span class="media-sep">·</span>
       <span class="media-label">Ad Config</span>
       <span class="media-val" id="view-adConfig">LIvxq0u2</span>
+      <span class="media-sep">·</span>
+      <span class="media-label">Media</span>
+      <span class="media-val" id="view-mediaTitle">jUnzhbbH</span>
       <span id="hosting-badge" class="meta-badge" style="display:none"></span>
       <button class="media-edit-btn" onclick="setMediaEditMode(true)">✏ Edit</button>
     </div>
@@ -829,6 +826,21 @@
             </div>
             <div class="sjc-body" id="murl-row-stitch" style="display:none">
               <div class="sjc-url-row"><a class="sjc-url-link" id="murl-link-stitch" target="_blank" rel="noopener">—</a></div>
+              <span class="resp-headers-label">Request Parameters</span>
+              <div class="resp-headers">
+                <div class="resp-hdr-row">
+                  <span class="resp-hdr-key">site_id</span>
+                  <span class="resp-hdr-val" id="murl-param-site-stitch">—</span>
+                </div>
+                <div class="resp-hdr-row">
+                  <span class="resp-hdr-key">media_id</span>
+                  <span class="resp-hdr-val" id="murl-param-media-stitch">—</span>
+                </div>
+                <div class="resp-hdr-row">
+                  <span class="resp-hdr-key">ad_config_id</span>
+                  <span class="resp-hdr-val" id="murl-param-adconfig-stitch">—</span>
+                </div>
+              </div>
               <span class="resp-headers-label">Response Headers</span>
               <div class="resp-headers">
                 <div class="resp-hdr-row">
@@ -964,6 +976,21 @@
             </div>
             <div class="sjc-body" id="murl-row-jit" style="display:none">
               <div class="sjc-url-row"><a class="sjc-url-link" id="murl-link-jit" target="_blank" rel="noopener">—</a></div>
+              <span class="resp-headers-label">Request Parameters</span>
+              <div class="resp-headers">
+                <div class="resp-hdr-row">
+                  <span class="resp-hdr-key">site_id</span>
+                  <span class="resp-hdr-val" id="murl-param-site-jit">—</span>
+                </div>
+                <div class="resp-hdr-row">
+                  <span class="resp-hdr-key">media_id</span>
+                  <span class="resp-hdr-val" id="murl-param-media-jit">—</span>
+                </div>
+                <div class="resp-hdr-row">
+                  <span class="resp-hdr-key">ad_config_id</span>
+                  <span class="resp-hdr-val" id="murl-param-adconfig-jit">—</span>
+                </div>
+              </div>
               <span class="resp-headers-label">Response Headers</span>
               <div class="resp-headers">
                 <div class="resp-hdr-row">
@@ -1187,8 +1214,14 @@ async function fetchMediaInfo(mid) {
     const r = await fetch(`https://cdn.jwplayer.com/v2/media/${mid}`);
     if (!r.ok) return;
     const data = await r.json();
-    const item = (data.playlist || data)[0] || data;
-    const src  = (item.sources || [])[0]?.file || '';
+    const item  = (data.playlist || data)[0] || data;
+    const src   = (item.sources || [])[0]?.file || '';
+    // Update media title display: "Title (mediaId)" or bare ID as fallback
+    const title = item.title || item.name || '';
+    const mediaTitleEl = document.getElementById('view-mediaTitle');
+    if (mediaTitleEl) {
+      mediaTitleEl.textContent = title ? `${title} (${mid})` : mid;
+    }
     // JW-hosted: served from JW CDN domains
     const isHosted = /\.(jwplatform|jwpcdn|jwplayer)\.com\//i.test(src) ||
                      /content\.jwplatform\.com/i.test(src) ||
@@ -1329,6 +1362,13 @@ function initPlayer(id, url) {
       if (rhdrWorkflow) rhdrWorkflow.textContent = workflow || '—';
       const sidLinkEl = document.getElementById(`sid-${id}`);
       if (sidLinkEl && infoUrl) { sidLinkEl.textContent = infoUrl; sidLinkEl.href = infoUrl; }
+      // Populate request parameter rows in Manifest URL card
+      const murlParamSite = document.getElementById(`murl-param-site-${id}`);
+      if (murlParamSite) murlParamSite.textContent = currentSiteId || '—';
+      const murlParamMedia = document.getElementById(`murl-param-media-${id}`);
+      if (murlParamMedia) murlParamMedia.textContent = currentMediaId || '—';
+      const murlParamAdconfig = document.getElementById(`murl-param-adconfig-${id}`);
+      if (murlParamAdconfig) murlParamAdconfig.textContent = currentAdConfigId || '—';
       // Populate response header rows in Manifest URL card
       const murlSid      = document.getElementById(`murl-rhdr-sid-${id}`);
       if (murlSid) murlSid.textContent = sid || '—';
@@ -2200,12 +2240,11 @@ function teardownMode(id) {
   const murlLink = document.getElementById(`murl-link-${id}`);
   if (murlLink) { murlLink.href = ''; murlLink.textContent = '—'; }
   manifestUrls[id] = null;
-  const murlSid = document.getElementById(`murl-rhdr-sid-${id}`);
-  if (murlSid) murlSid.textContent = '—';
-  const murlSession = document.getElementById(`murl-rhdr-session-${id}`);
-  if (murlSession) murlSession.textContent = '—';
-  const murlWorkflow = document.getElementById(`murl-rhdr-workflow-${id}`);
-  if (murlWorkflow) murlWorkflow.textContent = '—';
+  ['murl-param-site','murl-param-media','murl-param-adconfig',
+   'murl-rhdr-sid','murl-rhdr-session','murl-rhdr-workflow'].forEach(key => {
+    const el = document.getElementById(`${key}-${id}`);
+    if (el) el.textContent = '—';
+  });
 
   // Reset break info panel
   lastBreakInfo[id] = null;
@@ -2295,14 +2334,19 @@ function saveCookieSettings() {
 }
 function syncMediaViewSpans() {
   document.getElementById('view-siteId').textContent   = document.getElementById('siteIdInput').value;
-  document.getElementById('view-mediaId').textContent  = document.getElementById('mediaIdInput').value;
   document.getElementById('view-adConfig').textContent = document.getElementById('adConfigInput').value;
+  // Show bare ID as placeholder until fetchMediaInfo resolves the title
+  document.getElementById('view-mediaTitle').textContent = document.getElementById('mediaIdInput').value;
 }
 function setMediaEditMode(editing) {
-  document.getElementById('media-view').style.display        = editing ? 'none' : 'flex';
-  document.getElementById('media-edit').style.display        = editing ? 'flex' : 'none';
-  if (!editing) syncMediaViewSpans();
-  if (editing)  document.getElementById('siteIdInput').focus();
+  document.getElementById('media-view').style.display = editing ? 'none' : 'flex';
+  document.getElementById('media-edit').style.display = editing ? 'flex' : 'none';
+  if (!editing) {
+    syncMediaViewSpans();
+    const mid = document.getElementById('mediaIdInput').value.trim();
+    if (mid) fetchMediaInfo(mid);
+  }
+  if (editing) document.getElementById('siteIdInput').focus();
 }
 function loadCookieSettings() {
   const match = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith(COOKIE_NAME + '='));
@@ -2398,6 +2442,9 @@ window.addEventListener('DOMContentLoaded', () => {
   // Start unloaded — user must click Load to initialise players
   renderSessionPanel('stitch', null);
   renderSessionPanel('jit',    null);
+
+  // Pre-fetch media title so it shows before Load is clicked
+  fetchMediaInfo(document.getElementById('mediaIdInput').value);
 });
 </script>
 </body>
