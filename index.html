@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Just In Time Insertion — JWX Demo</title>
+  <title>Just In Time Insertion · JWX Demo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
@@ -109,7 +109,7 @@
 
     /* ── Layout ── */
     .players-section { padding: 28px 56px 0; }
-    .players-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+    .players-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 28px; row-gap: 0; align-items: start; }
 
     /* ── Column header ── */
     .col-head { margin-bottom: 12px; }
@@ -216,6 +216,20 @@
     }
     .ad-badge.visible { display: block; }
 
+    /* Ad countdown overlay */
+    .ad-countdown {
+      position: absolute; top: 10px; right: 10px;
+      background: rgba(0,0,0,.62); color: #fff;
+      font-size: 0.68rem; font-weight: 600;
+      padding: 4px 9px; border-radius: 4px;
+      display: none; align-items: center; gap: 7px;
+      pointer-events: none; z-index: 6;
+      border: 1px solid rgba(255,255,255,.15);
+    }
+    .ad-countdown.visible { display: flex; }
+    .adc-sep { color: rgba(255,255,255,.4); }
+    .adc-time { font-variant-numeric: tabular-nums; color: var(--amber); font-weight: 700; }
+
     /* ── Ad Timeline ── */
     .timeline-card {
       background: var(--g1); border-radius: 8px;
@@ -225,12 +239,14 @@
       font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
       letter-spacing: .08em; color: var(--muted); margin-bottom: 10px;
       display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 6px;
     }
     .ad-server-box {
       background: var(--navy); color: var(--white);
       font-size: 0.7rem; font-weight: 700;
       padding: 4px 10px; border-radius: 5px;
       display: inline-block; position: relative;
+      white-space: nowrap; flex-shrink: 0; margin-left: auto;
     }
 
     /* ── Ad-server request animation ── */
@@ -287,7 +303,7 @@
       font-size: 0.6rem; font-weight: 600; color: var(--muted);
       cursor: pointer; padding: 2px 7px; border-radius: 3px;
       border: 1px solid var(--g3); transition: color .15s, border-color .15s;
-      user-select: none;
+      user-select: none; white-space: nowrap;
     }
     .tl-toggle:hover { color: var(--text); border-color: var(--muted); }
     .tl-toggle.active { color: var(--blue); border-color: var(--blue); }
@@ -412,6 +428,17 @@
     }
     .fetch-toast.show { opacity: 1; transform: translateY(0); }
     .fetch-toast .dot { width: 6px; height: 6px; background: var(--blue); border-radius: 50%; }
+    .skip-toast {
+      position: absolute; bottom: calc(100% + 10px); left: 0;
+      background: var(--amber); color: #1a1a2e;
+      font-size: 0.7rem; font-weight: 700;
+      padding: 5px 11px; border-radius: 5px;
+      display: flex; align-items: center; gap: 5px;
+      opacity: 0; transform: translateY(4px);
+      transition: opacity .3s, transform .3s;
+      white-space: nowrap; pointer-events: none;
+    }
+    .skip-toast.show { opacity: 1; transform: translateY(0); }
 
     .timeline-legend {
       display: flex; gap: 14px; margin-top: 9px;
@@ -432,6 +459,44 @@
     .session-json-card {
       margin-top: 6px; border: 1px solid var(--g2); border-radius: 6px; overflow: hidden;
     }
+
+    /* ── Developer section ── */
+    .dev-section { margin-top: 8px; border: 1px solid var(--g2); border-radius: 8px; overflow: hidden; }
+    .player-col > .dev-section:last-child { margin-bottom: 20px; }
+    .dev-header {
+      display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+      cursor: pointer; user-select: none; background: var(--g1);
+    }
+    .dev-header:hover { background: var(--g2); }
+    .dev-title { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); flex: 1; }
+    .dev-chevron { font-size: 0.6rem; color: var(--muted); transition: transform .2s; }
+    .dev-chevron.open { transform: rotate(180deg); }
+    .dev-body { padding: 12px 14px 4px; display: flex; flex-direction: column; gap: 0; border-top: 1px solid var(--g2); }
+    .dev-doc-link { font-size: 0.62rem; color: var(--blue); text-decoration: none; display: inline-block; margin-bottom: 12px; }
+    .dev-doc-link:hover { text-decoration: underline; }
+    .sjc-doc-link { font-size: 0.58rem; color: var(--blue); text-decoration: none; opacity: 0.7; flex-shrink: 0; margin-right: auto; }
+    .sjc-doc-link:hover { opacity: 1; text-decoration: underline; }
+    .dev-features { display: flex; flex-direction: column; gap: 0; margin-bottom: 14px; border: 1px solid var(--g2); border-radius: 6px; overflow: hidden; }
+    .dev-feature { display: flex; flex-direction: row; align-items: flex-start; gap: 0; border-bottom: 1px solid var(--g2); }
+    .dev-feature:last-child { border-bottom: none; }
+    .dev-feature .tl-toggle { flex-shrink: 0; width: 100px; text-align: center; margin: 10px 10px 10px 10px; align-self: flex-start; }
+    .dev-feat-desc { font-size: 0.62rem; color: var(--muted); line-height: 1.45; padding: 10px 10px 10px 0; border-left: 1px solid var(--g2); padding-left: 10px; flex: 1; }
+    /* JIT protocol warning banner */
+    .jit-warning {
+      margin-top: 8px; padding: 8px 12px;
+      background: rgba(243,156,18,.10); border: 1px solid rgba(243,156,18,.40);
+      border-radius: 6px; font-size: 0.68rem; color: #a06000; line-height: 1.4;
+    }
+    /* Flat accordion inside dev-body — no double borders */
+    .dev-body .session-json-card { margin-top: 0; border: none; border-radius: 0; border-top: 1px solid var(--g2); }
+    .dev-body .session-json-card .sjc-header { background: transparent; border-bottom: none; padding: 7px 0; }
+    .dev-body .session-json-card .sjc-header:hover { background: var(--g2); padding-left: 6px; padding-right: 6px; margin: 0 -6px; border-radius: 4px; }
+    .dev-body .session-json-card .sjc-body { border-top: 1px solid var(--g2); }
+    .dev-body .sjc-link { max-width: 260px; } /* full URL visible in header */
+    /* URL rows inside card bodies */
+    .sjc-url-row { padding: 6px 12px; border-bottom: 1px solid var(--g2); background: var(--g1); }
+    .sjc-url-link { font-family: monospace; font-size: 0.65rem; color: var(--blue); word-break: break-all; text-decoration: none; display: block; }
+    .sjc-url-link:hover { text-decoration: underline; }
     .sjc-header {
       background: var(--g1); color: var(--muted); padding: 6px 12px;
       display: flex; align-items: center; gap: 8px;
@@ -450,6 +515,24 @@
     .sjc-chevron { font-size: 0.6rem; flex-shrink: 0; transition: transform .2s; color: var(--muted); }
     .sjc-chevron.open { transform: rotate(180deg); }
     .sjc-body { background: #fff; border-top: 1px solid var(--g2); }
+    .sjc-actions { display: flex; gap: 4px; align-items: center; margin-left: auto; }
+    .sjc-btn {
+      background: none; border: 1px solid var(--g3); border-radius: 3px;
+      color: var(--muted); font-size: 0.7rem; line-height: 1; padding: 1px 5px;
+      cursor: pointer; transition: color .15s, border-color .15s;
+    }
+    .sjc-btn:hover { color: var(--blue); border-color: var(--blue); }
+    .sjc-tag {
+      font-family: monospace; font-size: 0.6rem; color: var(--muted);
+      background: rgba(26,35,50,.07); padding: 1px 6px; border-radius: 3px;
+      border: 1px solid var(--g3); white-space: nowrap; overflow: hidden;
+      text-overflow: ellipsis; max-width: 160px;
+    }
+    .sjc-break-label {
+      font-family: monospace; font-size: 0.6rem; color: var(--muted);
+      background: rgba(26,35,50,.07); padding: 1px 6px; border-radius: 3px;
+      border: 1px solid var(--g3); margin-left: auto;
+    }
     .sjc-pre {
       margin: 0; padding: 10px 12px; font-family: monospace; font-size: 0.67rem;
       color: #334; white-space: pre; line-height: 1.5;
@@ -514,8 +597,8 @@
     }
     .media-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(0,149,255,.12); }
 
-    /* ── Grid items: prevent overflow blowout ── */
-    .player-col { min-width: 0; }
+    /* ── Grid items: subgrid so rows align across both columns ── */
+    .player-col { min-width: 0; display: grid; grid-row: span 8; grid-template-rows: subgrid; }
 
     /* ── Responsive: consistent horizontal rhythm across all sections ── */
     :root { --page-pad: 56px; }
@@ -525,11 +608,11 @@
     }
     @media (max-width: 960px) {
       :root { --page-pad: 28px; }
-      .players-grid { gap: 18px; }
+      .players-grid { column-gap: 18px; }
     }
     @media (max-width: 660px) {
       :root { --page-pad: 16px; }
-      .players-grid { grid-template-columns: 1fr; gap: 12px; }
+      .players-grid { grid-template-columns: 1fr; column-gap: 12px; }
       .header { gap: 16px; }
       .header-logo { height: 68px; }
       .benefits-bar { flex-direction: column; }
@@ -574,7 +657,7 @@
     <div class="benefit-item-stat">2×</div>
     <div class="benefit-item-body">
       <div class="benefit-item-title">Increased Render Rates</div>
-      <div class="benefit-item-sub">VOD render rates jump from 45% → 90% — you only pay for ads viewers actually watch</div>
+      <div class="benefit-item-sub">VOD render rates jump from 45% to 90%. You only pay for ads viewers actually watch.</div>
     </div>
   </div>
   <div class="benefit-divider"></div>
@@ -590,7 +673,7 @@
     <div class="benefit-item-stat" style="color:#9B79E8">All</div>
     <div class="benefit-item-body">
       <div class="benefit-item-title">Works on Every Device</div>
-      <div class="benefit-item-sub">All JIT logic is server-side — Smart TVs, mobile, desktop, CTV all benefit equally</div>
+      <div class="benefit-item-sub">All JIT logic runs server-side. Smart TVs, mobile, desktop and CTV all benefit equally.</div>
     </div>
   </div>
 </div>
@@ -623,13 +706,14 @@
         <div class="badge-row">
           <div class="col-meta" id="col-meta-stitch"></div>
         </div>
-        <p class="subtitle" id="col-sub-stitch">All ads are stitched into the manifest upfront — even if they're never watched.</p>
+        <p class="subtitle" id="col-sub-stitch">All ads are stitched into the manifest upfront, even if they're never watched.</p>
       </div>
 
       <div class="video-wrap paused" id="wrap-stitch">
         <video id="vid-stitch" muted playsinline preload="metadata"></video>
         <div class="player-overlay" id="overlay-stitch"></div>
         <div class="ad-badge" id="ad-badge-stitch">AD</div>
+        <div class="ad-countdown" id="ad-countdown-stitch"></div>
         <div class="vid-controls">
           <input type="range" class="vid-progress" id="prog-stitch" min="0" max="100" value="0" step=".1">
           <div class="vid-row">
@@ -644,10 +728,6 @@
       <div class="timeline-card">
         <div class="timeline-title" id="ad-title-stitch">
           <span>Video Manifest <span class="manifest-mode-badge" id="manifest-badge-stitch"></span></span>
-          <span class="tl-toggles">
-            <span class="tl-toggle" id="buf-toggle-stitch" onclick="toggleBufferBar('stitch')">Buffer</span>
-            <span class="tl-toggle" id="murl-toggle-stitch" onclick="toggleManifestUrl('stitch')">Manifest</span>
-          </span>
           <span class="ad-server-box" id="adserver-stitch">Ad Server<span class="adserver-count" id="adserver-count-stitch">0</span></span>
         </div>
         <div style="position:relative">
@@ -669,24 +749,74 @@
           <div class="render-track"><div class="render-fill" id="stitch-rf" style="width:0%;background:#E74C3C;transition:width 1.2s ease"></div></div>
           <div class="render-pct"   id="stitch-rp" style="color:#E74C3C">—</div>
         </div>
-        <div class="render-note" id="render-note-stitch">Ads stitched upfront — only reaches 100% if viewer watches every break</div>
+        <div class="render-note" id="render-note-stitch">Ads stitched upfront. Only reaches 100% if the viewer watches every break.</div>
       </div>
 
-      <!-- Manifest URL row -->
-      <div class="manifest-url-row" id="murl-row-stitch" style="display:none">
-        <span class="murl-label">Manifest</span>
-        <a class="murl-link" id="murl-link-stitch" target="_blank" rel="noopener">—</a>
-      </div>
-
-      <!-- Session JSON collapsible -->
-      <div class="session-json-card">
-        <div class="sjc-header" onclick="toggleSessionJSON('stitch')">
-          <span class="sjc-title">Session JSON</span>
-          <a class="sjc-link" id="sid-stitch" target="_blank" rel="noopener" onclick="event.stopPropagation()">—</a>
-          <span class="sjc-chevron" id="sjc-chev-stitch">▼</span>
+      <!-- Features section -->
+      <div class="dev-section">
+        <div class="dev-header" onclick="toggleFeatSection('stitch')">
+          <span class="dev-title">Features</span>
+          <span class="dev-chevron" id="feat-chev-stitch">▼</span>
         </div>
-        <div class="sjc-body" id="sjc-body-stitch" style="display:none">
-          <pre class="sjc-pre" id="session-json-stitch">Waiting for session data…</pre>
+        <div class="dev-body" id="feat-body-stitch" style="display:none">
+          <a class="dev-doc-link" href="https://docs.jwplayer.com/platform/reference/configure-ssai-for-vod-content" target="_blank" rel="noopener">↗ JWX SSAI documentation</a>
+          <div class="dev-features" style="margin-bottom:0">
+            <div class="dev-feature">
+              <span class="tl-toggle" id="countdown-toggle-stitch" onclick="toggleCountdown()">Countdown</span>
+              <p class="dev-feat-desc">Overlays "Ad X of Y · 0:12" on the video during ad breaks. Uses session endpoint data to determine the number of ads and their durations within each break.</p>
+            </div>
+            <div class="dev-feature">
+              <span class="tl-toggle" id="ffwd-toggle-stitch" onclick="toggleBlockFFWD()">Block FFWD</span>
+              <p class="dev-feat-desc">Prevents the viewer from seeking forward past content they haven't watched yet. Simulates a linear viewing experience.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Developer section -->
+      <div class="dev-section">
+        <div class="dev-header" onclick="toggleDevSection('stitch')">
+          <span class="dev-title">Developer</span>
+          <span class="dev-chevron" id="dev-chev-stitch">▼</span>
+        </div>
+        <div class="dev-body" id="dev-body-stitch" style="display:none">
+          <div class="session-json-card">
+            <div class="sjc-header" onclick="toggleManifestUrl('stitch')">
+              <span class="sjc-title">Manifest URL</span>
+              <a class="sjc-doc-link" href="https://docs.jwplayer.com/platform/reference/get_v2-sites-site-id-media-media-id-ssai-manifest-extension" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="GET /v2/sites/{site_id}/media/{media_id}/ssai.{manifest_extension}">↗ API ref</a>
+              <span class="sjc-chevron" id="murl-chev-stitch">▼</span>
+            </div>
+            <div class="sjc-body" id="murl-row-stitch" style="display:none">
+              <div style="padding:8px 12px"><a class="murl-link" id="murl-link-stitch" target="_blank" rel="noopener">—</a></div>
+            </div>
+          </div>
+          <div class="session-json-card">
+            <div class="sjc-header" onclick="toggleSessionJSON('stitch')">
+              <span class="sjc-title">Session JSON</span>
+              <a class="sjc-doc-link" href="https://docs.jwplayer.com/platform/reference/get_v2-sites-site-id-media-media-id-ssai-session-ssai-session-id-info-json" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="GET /v2/sites/{site_id}/media/{media_id}/ssai_session/{ssai_session_id}/info.json">↗ API ref</a>
+              <a class="sjc-link" id="sjc-url-stitch" onclick="event.stopPropagation()" target="_blank" rel="noopener"></a>
+              <span class="sjc-actions" onclick="event.stopPropagation()">
+                <button class="sjc-btn" id="copy-sid-stitch" onclick="copySessionId('stitch')" title="Copy session ID">⎘</button>
+                <button class="sjc-btn" onclick="refreshSessionJson('stitch')" title="Refresh session JSON">↻</button>
+              </span>
+              <span class="sjc-chevron" id="sjc-chev-stitch">▼</span>
+            </div>
+            <div class="sjc-body" id="sjc-body-stitch" style="display:none">
+              <div class="sjc-url-row"><a class="sjc-url-link" id="sid-stitch" href="" target="_blank" rel="noopener">—</a></div>
+              <pre class="sjc-pre" id="session-json-stitch">Waiting for session data…</pre>
+            </div>
+          </div>
+          <div class="session-json-card" id="break-info-card-stitch" style="display:none">
+            <div class="sjc-header" onclick="toggleBreakPanel('stitch')">
+              <span class="sjc-title">Last ad break info</span>
+              <span class="sjc-break-label" id="break-info-label-stitch"></span>
+              <span class="sjc-chevron" id="break-chev-stitch">▼</span>
+            </div>
+            <div class="sjc-body" id="break-body-stitch" style="display:none">
+              <div class="sjc-url-row"><a class="sjc-url-link" id="break-url-stitch" href="" target="_blank" rel="noopener">—</a></div>
+              <pre class="sjc-pre" id="break-json-stitch"></pre>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -698,13 +828,15 @@
         <div class="badge-row">
           <div class="col-meta" id="col-meta-jit"></div>
         </div>
-        <p class="subtitle" id="col-sub-jit">Ad requests are made only when the player reaches each break — zero wasted stitching.</p>
+        <p class="subtitle" id="col-sub-jit">Ad requests are made only when the player reaches each break, with no wasted stitching.</p>
+        <div class="jit-warning" id="jit-warning" style="display:none">⚠ Standard insertion is being applied. Onboarding of this asset's streaming profile is required to enable JIT.</div>
       </div>
 
       <div class="video-wrap paused" id="wrap-jit">
         <video id="vid-jit" muted playsinline preload="metadata"></video>
         <div class="player-overlay" id="overlay-jit"></div>
         <div class="ad-badge" id="ad-badge-jit">AD</div>
+        <div class="ad-countdown" id="ad-countdown-jit"></div>
         <div class="vid-controls">
           <input type="range" class="vid-progress" id="prog-jit" min="0" max="100" value="0" step=".1">
           <div class="vid-row">
@@ -719,16 +851,14 @@
       <div class="timeline-card">
         <div class="timeline-title" id="ad-title-jit">
           <span>Video Manifest <span class="manifest-mode-badge" id="manifest-badge-jit"></span></span>
-          <span class="tl-toggles">
-            <span class="tl-toggle" id="buf-toggle-jit" onclick="toggleBufferBar('jit')">Buffer</span>
-            <span class="tl-toggle" id="murl-toggle-jit" onclick="toggleManifestUrl('jit')">Manifest</span>
-          </span>
           <span class="ad-server-box" id="adserver-jit">Ad Server<span class="adserver-count" id="adserver-count-jit">0</span></span>
         </div>
         <div style="position:relative">
-          <div class="buffer-bar" id="buf-jit" style="display:none">
+          <div class="buffer-bar" id="buf-jit" style="display:block">
             <div class="buffer-float" id="buf-float-jit">0s</div>
           </div>
+          <!-- Skip filler toast -->
+          <div class="skip-toast" id="skip-toast">⏭ <span id="skip-toast-label">0s skipped</span></div>
           <!-- JIT fetch toast notification -->
           <div class="fetch-toast" id="fetch-toast">
             <div class="dot"></div>
@@ -750,24 +880,82 @@
           <div class="render-track"><div class="render-fill" id="jit-rf" style="width:0%;background:var(--green);transition:width 1.5s ease"></div></div>
           <div class="render-pct"   id="jit-rp" style="color:var(--green)">—</div>
         </div>
-        <div class="render-note" id="render-note-jit">Ads are stitched just before playing the ad — render rate is always close to 100%</div>
+        <div class="render-note" id="render-note-jit">Ads are stitched when the player fetches the ad segment, keeping render rate near 100%.</div>
       </div>
 
-      <!-- Manifest URL row -->
-      <div class="manifest-url-row" id="murl-row-jit" style="display:none">
-        <span class="murl-label">Manifest</span>
-        <a class="murl-link" id="murl-link-jit" target="_blank" rel="noopener">—</a>
-      </div>
-
-      <!-- Session JSON collapsible -->
-      <div class="session-json-card">
-        <div class="sjc-header" onclick="toggleSessionJSON('jit')">
-          <span class="sjc-title">Session JSON</span>
-          <a class="sjc-link" id="sid-jit" target="_blank" rel="noopener" onclick="event.stopPropagation()">—</a>
-          <span class="sjc-chevron" id="sjc-chev-jit">▼</span>
+      <!-- Features section -->
+      <div class="dev-section">
+        <div class="dev-header" onclick="toggleFeatSection('jit')">
+          <span class="dev-title">Features</span>
+          <span class="dev-chevron" id="feat-chev-jit">▼</span>
         </div>
-        <div class="sjc-body" id="sjc-body-jit" style="display:none">
-          <pre class="sjc-pre" id="session-json-jit">Waiting for session data…</pre>
+        <div class="dev-body" id="feat-body-jit" style="display:none">
+          <a class="dev-doc-link" href="https://docs.jwplayer.com/platform/reference/configure-ssai-for-vod-content" target="_blank" rel="noopener">↗ JWX SSAI documentation</a>
+          <div class="dev-features" style="margin-bottom:0">
+            <div class="dev-feature">
+              <span class="tl-toggle" id="countdown-toggle-jit" onclick="toggleCountdown()">Countdown</span>
+              <p class="dev-feat-desc">Overlays "Ad X of Y · 0:12" on the video during ad breaks. Uses session endpoint data to determine the number of ads and their durations within each break.</p>
+            </div>
+            <div class="dev-feature">
+              <span class="tl-toggle" id="skipfiller-toggle" onclick="toggleSkipFiller()">Skip filler</span>
+              <p class="dev-feat-desc">Automatically seeks past unfilled filler time at the end of each break. Uses session endpoint data to detect the gap between total break duration and actual ad fill.</p>
+            </div>
+            <div class="dev-feature">
+              <span class="tl-toggle" id="ffwd-toggle-jit" onclick="toggleBlockFFWD()">Block FFWD</span>
+              <p class="dev-feat-desc">Prevents the viewer from seeking forward past content they haven't watched yet. Simulates a linear viewing experience.</p>
+            </div>
+            <div class="dev-feature">
+              <span class="tl-toggle" id="buf-toggle-jit" onclick="toggleBufferBar('jit')">Show buffer</span>
+              <p class="dev-feat-desc">Visualises the player's buffer depth on the timeline. In JIT mode the buffer edge triggers the next ad fetch as buffering approaches each break point.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Developer section -->
+      <div class="dev-section">
+        <div class="dev-header" onclick="toggleDevSection('jit')">
+          <span class="dev-title">Developer</span>
+          <span class="dev-chevron" id="dev-chev-jit">▼</span>
+        </div>
+        <div class="dev-body" id="dev-body-jit" style="display:none">
+          <div class="session-json-card">
+            <div class="sjc-header" onclick="toggleManifestUrl('jit')">
+              <span class="sjc-title">Manifest URL</span>
+              <a class="sjc-doc-link" href="https://docs.jwplayer.com/platform/reference/get_v2-sites-site-id-media-media-id-ssai-manifest-extension" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="GET /v2/sites/{site_id}/media/{media_id}/ssai.{manifest_extension}">↗ API ref</a>
+              <span class="sjc-chevron" id="murl-chev-jit">▼</span>
+            </div>
+            <div class="sjc-body" id="murl-row-jit" style="display:none">
+              <div style="padding:8px 12px"><a class="murl-link" id="murl-link-jit" target="_blank" rel="noopener">—</a></div>
+            </div>
+          </div>
+          <div class="session-json-card">
+            <div class="sjc-header" onclick="toggleSessionJSON('jit')">
+              <span class="sjc-title">Session JSON</span>
+              <a class="sjc-doc-link" href="https://docs.jwplayer.com/platform/reference/get_v2-sites-site-id-media-media-id-ssai-session-ssai-session-id-info-json" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="GET /v2/sites/{site_id}/media/{media_id}/ssai_session/{ssai_session_id}/info.json">↗ API ref</a>
+              <a class="sjc-link" id="sjc-url-jit" onclick="event.stopPropagation()" target="_blank" rel="noopener"></a>
+              <span class="sjc-actions" onclick="event.stopPropagation()">
+                <button class="sjc-btn" id="copy-sid-jit" onclick="copySessionId('jit')" title="Copy session ID">⎘</button>
+                <button class="sjc-btn" onclick="refreshSessionJson('jit')" title="Refresh session JSON">↻</button>
+              </span>
+              <span class="sjc-chevron" id="sjc-chev-jit">▼</span>
+            </div>
+            <div class="sjc-body" id="sjc-body-jit" style="display:none">
+              <div class="sjc-url-row"><a class="sjc-url-link" id="sid-jit" href="" target="_blank" rel="noopener">—</a></div>
+              <pre class="sjc-pre" id="session-json-jit">Waiting for session data…</pre>
+            </div>
+          </div>
+          <div class="session-json-card" id="break-info-card-jit" style="display:none">
+            <div class="sjc-header" onclick="toggleBreakPanel('jit')">
+              <span class="sjc-title">Last ad break info</span>
+              <span class="sjc-break-label" id="break-info-label-jit"></span>
+              <span class="sjc-chevron" id="break-chev-jit">▼</span>
+            </div>
+            <div class="sjc-body" id="break-body-jit" style="display:none">
+              <div class="sjc-url-row"><a class="sjc-url-link" id="break-url-jit" href="" target="_blank" rel="noopener">—</a></div>
+              <pre class="sjc-pre" id="break-json-jit"></pre>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -778,7 +966,7 @@
 
 <!-- ══════════════════════ FOOTER ══════════════════════ -->
 <section class="glossary-section">
-  <div class="glossary-heading">Key Metrics</div>
+  <div class="glossary-heading">Key Metrics explained</div>
   <div class="glossary-grid">
     <div class="glossary-card">
       <div class="glossary-term">Render Rate</div>
@@ -854,6 +1042,18 @@ const streamDurations  = { stitch: null, jit: null }; // total stream duration f
 const lastSessionData  = { stitch: null, jit: null }; // cached to retry buildTimeline on LEVEL_LOADED
 const ssaiModes       = { stitch: null, jit: null }; // decoded x-jw-ssai-strategy-action per player
 const manifestUrls    = { stitch: null, jit: null }; // active manifest URL per player
+const jitFillerSkipped  = [false, false, false];     // JIT: filler-skip fired per break
+const lastBreakInfo     = { stitch: null, jit: null };// last fetched break-level JSON per column
+const breakInfoFetched  = {                           // per-break fetch guard (both columns)
+  stitch: [false, false, false],
+  jit:    [false, false, false],
+};
+const breakNoFillVerified = [false, false, false];    // JIT: no-fill verification fetch guard
+let   skipFillerEnabled  = true;                      // JIT: skip-unused-filler feature toggle (on by default)
+let   countdownEnabled   = true;                      // both cols: ad countdown overlay (on by default)
+let   blockFFWD          = false;                     // both cols: block fast-forward (default off)
+const highWaterMark      = { stitch: 0, jit: 0 };    // furthest natural playhead position per column
+let   skipToastTimer    = null;
 let mediaHostingType  = null; // 'Hosted' | 'External' from delivery API
 let breakTimingsUpdated = false; // guard for one-time timing update from live session data
 let pollTimers       = { stitch: null, jit: null };
@@ -902,13 +1102,24 @@ function applyDetectedMode(id) {
   if (isJIT) {
     titleEl.textContent = 'JIT Insertion';
     if (badgeEl) badgeEl.className = 'mode-badge jit';
-    subEl.textContent   = 'Ad requests are made only when the player reaches each break — zero wasted stitching.';
-    if (noteEl) noteEl.textContent = 'Ads are stitched just before playing the ad — render rate is always close to 100%';
+    subEl.textContent   = 'Ad requests are made only when the player reaches each break, with no wasted stitching.';
+    if (noteEl) noteEl.textContent = 'Ads are stitched when the player fetches the ad segment, keeping render rate near 100%.';
   } else {
     titleEl.textContent = 'Standard Insertion';
     if (badgeEl) badgeEl.className = 'mode-badge stitch';
-    subEl.textContent   = 'All ads are stitched into the manifest upfront — even if they\'re never watched.';
-    if (noteEl) noteEl.textContent = 'Ads stitched upfront — only reaches 100% if viewer watches every break';
+    subEl.textContent   = 'All ads are stitched into the manifest upfront, even if they\'re never watched.';
+    if (noteEl) noteEl.textContent = 'Ads stitched upfront. Only reaches 100% if the viewer watches every break.';
+    // When standard insertion is active in the JIT column, hide JIT-only UI
+    if (id === 'jit') {
+      const bufBar = document.getElementById('buf-jit');
+      if (bufBar) { bufBar.style.display = 'none'; bufBar.style.width = '0%'; }
+      document.getElementById('buf-toggle-jit')?.classList.remove('active');
+      const featJIT = document.getElementById('feat-body-jit');
+      const bufRow  = document.getElementById('buf-toggle-jit')?.closest('.dev-feature');
+      if (bufRow) bufRow.style.display = 'none';
+      const skipRow = document.getElementById('skipfiller-toggle')?.closest('.dev-feature');
+      if (skipRow) skipRow.style.display = 'none';
+    }
   }
 
   updateColMeta(id);
@@ -1072,6 +1283,11 @@ function initPlayer(id, url) {
           manifestBadge.className   = 'manifest-mode-badge ssai';
         }
       }
+      // Show warning in JIT column when stream is not served from the JIT engine
+      if (id === 'jit' && !finalUrl.includes('ssai-jit.jwplayer.com')) {
+        const warn = document.getElementById('jit-warning');
+        if (warn) warn.style.display = 'block';
+      }
       // Switch timeline placeholder to animated "waiting" state
       const track = document.getElementById(`track-${id}`);
       if (track && track.dataset.built !== '1') {
@@ -1099,16 +1315,38 @@ function initPlayer(id, url) {
       prog.value = pct;
       updatePlayhead(id, pct);
       updateBufferBar(id, video);
+      updateAdCountdown(id, video);
       timeEl.textContent = `${fmt(video.currentTime)} / ${fmt(video.duration)}`;
+      // Track furthest position naturally reached (for Block FFWD)
+      highWaterMark[id] = Math.max(highWaterMark[id], video.currentTime);
 
-      if (isJITMode(id)) checkJITTriggers(video.currentTime);
+      if (isJITMode(id)) {
+        checkJITTriggers(video.currentTime);
+        checkFillerSkip(video.currentTime, video);
+        checkJITNoFillVerification(video.currentTime);
+      }
+      checkBreakApproach(id, video.currentTime);
       checkImpressions(id, video.currentTime);
     }
+  });
+
+  // Block fast-forward past the next unwatched ad break
+  video.addEventListener('seeking', () => {
+    if (!blockFFWD) return;
+    const hwm = highWaterMark[id];
+    // Find the next break that starts beyond the high-water mark
+    const nextBreak = getBreaks(id).find(b => (b.time_offset || 0) > hwm + 0.5);
+    const limit = nextBreak ? (nextBreak.time_offset || 0) : Infinity;
+    if (video.currentTime > limit) video.currentTime = Math.min(hwm, limit);
   });
 
   video.addEventListener('play',  () => { pbBtn.textContent = '⏸'; wrap.classList.remove('paused'); });
   video.addEventListener('pause', () => { pbBtn.textContent = '▶'; wrap.classList.add('paused'); });
   video.addEventListener('ended', () => { pbBtn.textContent = '▶'; wrap.classList.add('paused'); });
+  // Update buffer bar as the browser pre-fetches data (fires before first play)
+  video.addEventListener('progress',  () => { if (video.duration) updateBufferBar(id, video); });
+  video.addEventListener('canplay',   () => { if (video.duration) updateBufferBar(id, video); });
+  video.addEventListener('loadeddata',() => { if (video.duration) updateBufferBar(id, video); });
 
   prog.addEventListener('mousedown', () => { dragging[id] = true; });
   prog.addEventListener('input', () => {
@@ -1165,12 +1403,30 @@ function toggleBufferBar(mode) {
   btn.classList.toggle('active', show);
 }
 
+function toggleFeatSection(mode) {
+  const body = document.getElementById(`feat-body-${mode}`);
+  const chev = document.getElementById(`feat-chev-${mode}`);
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'flex';
+  if (chev) chev.classList.toggle('open', !isOpen);
+}
+
+function toggleDevSection(mode) {
+  const body = document.getElementById(`dev-body-${mode}`);
+  const chev = document.getElementById(`dev-chev-${mode}`);
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  if (chev) chev.classList.toggle('open', !isOpen);
+}
+
 function toggleManifestUrl(mode) {
-  const row = document.getElementById(`murl-row-${mode}`);
-  const btn = document.getElementById(`murl-toggle-${mode}`);
-  const show = row.style.display === 'none';
-  row.style.display = show ? 'flex' : 'none';
-  btn.classList.toggle('active', show);
+  const body = document.getElementById(`murl-row-${mode}`);
+  const chev = document.getElementById(`murl-chev-${mode}`);
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  if (chev) chev.classList.toggle('open', !isOpen);
 }
 
 /* ============================================================
@@ -1197,6 +1453,216 @@ function checkImpressions(mode, t) {
 function checkJITTriggers(t) {
   BREAK_STREAM_TRIGGERS.forEach((threshold, i) => {
     if (!jitFetched[i] && t >= threshold) triggerFetch('jit', i);
+  });
+}
+
+/* ============================================================
+   SKIP UNUSED FILLER TIME  (JIT only)
+   Docs: configure-ssai-for-vod-content#customize-the-viewer-experience
+   Logic: when playhead reaches end of filled ads within a break,
+          seek to break end — skipping any blank filler slate.
+   ============================================================ */
+function checkFillerSkip(t, video) {
+  if (!skipFillerEnabled) return;
+  const breaks = getBreaks('jit');
+  breaks.forEach((b, i) => {
+    if (jitFillerSkipped[i]) return;
+    if (!b.ads_requested) return; // break not yet requested, nothing to skip
+    const filledDuration = (b.ads || []).reduce((sum, a) => sum + (a.duration || 0), 0);
+    const breakDuration  = b.duration || 0;
+    const fillerGap      = breakDuration - filledDuration;
+    if (fillerGap < 0.5) return; // no meaningful filler
+    // Trigger 0.5s before filler boundary so seek lands before the slate renders.
+    // timeupdate fires ~4×/sec — without lookahead, 1–2 black frames slip through.
+    const skipAt = Math.max(b.time_offset || 0, (b.time_offset || 0) + filledDuration - 0.5);
+    const skipTo = (b.time_offset || 0) + breakDuration;
+    if (t >= skipAt && t < skipTo) {
+      jitFillerSkipped[i] = true;
+      video.currentTime = skipTo;
+      showSkipToast(Math.round(fillerGap));
+    }
+  });
+}
+
+function showSkipToast(seconds) {
+  const toast = document.getElementById('skip-toast');
+  const label = document.getElementById('skip-toast-label');
+  if (!toast || !label) return;
+  clearTimeout(skipToastTimer);
+  label.textContent = `${seconds}s filler skipped`;
+  toast.classList.add('show');
+  skipToastTimer = setTimeout(() => toast.classList.remove('show'), TIMING.TOAST_MS);
+}
+
+function toggleSkipFiller() {
+  skipFillerEnabled = !skipFillerEnabled;
+  document.getElementById('skipfiller-toggle').classList.toggle('active', skipFillerEnabled);
+}
+
+function toggleBlockFFWD() {
+  blockFFWD = !blockFFWD;
+  ['stitch', 'jit'].forEach(id => {
+    document.getElementById(`ffwd-toggle-${id}`)?.classList.toggle('active', blockFFWD);
+  });
+}
+
+/* ============================================================
+   BREAK-LEVEL INFO FETCH
+   Resolves the relative `url` field on each break object against
+   the session info.json base URL and fetches the break endpoint.
+   ============================================================ */
+async function fetchBreakInfo(mode, breakIdx) {
+  const b = getBreaks(mode)[breakIdx];
+  if (!b?.url || !sessionInfoUrls[mode]) return;
+  try {
+    const resolved = new URL(b.url, sessionInfoUrls[mode]).href;
+    const r = await fetch(resolved);
+    if (!r.ok) return;
+    const data = await r.json();
+    lastBreakInfo[mode] = { _breakIdx: breakIdx, _breakId: b.break_id, _url: resolved, ...data };
+    renderBreakPanel(mode);
+  } catch(_) {}
+}
+
+function checkBreakApproach(mode, t) {
+  if (!sessions[mode]) return; // no live session — break endpoint unavailable
+  BREAK_STREAM_TRIGGERS.forEach((threshold, i) => {
+    if (!breakInfoFetched[mode][i] && t >= threshold) {
+      breakInfoFetched[mode][i] = true;
+      fetchBreakInfo(mode, i);
+    }
+  });
+}
+
+// JIT only: at break start, re-fetch break URL to confirm "No fill" from the authoritative source.
+// The approach fetch (2.5s before) may arrive before the ad server has resolved the request.
+function checkJITNoFillVerification(t) {
+  if (!sessions['jit']) return;
+  BREAK_OFFSETS.forEach((offset, i) => {
+    if (breakNoFillVerified[i]) return;
+    if (t < offset) return;
+    const el = document.getElementById(`jit-b${i}`);
+    if (!el?.classList.contains('unfilled')) return; // only re-check breaks currently showing "No fill"
+    breakNoFillVerified[i] = true;
+    verifyJITNoFill(i);
+  });
+}
+
+async function verifyJITNoFill(breakIdx) {
+  const b = getBreaks('jit')[breakIdx];
+  if (!b?.url || !sessionInfoUrls['jit']) return;
+  try {
+    const resolved = new URL(b.url, sessionInfoUrls['jit']).href;
+    const r = await fetch(resolved);
+    if (!r.ok) return;
+    const data = await r.json();
+    // Always update the break info panel with the definitive response
+    lastBreakInfo['jit'] = { _breakIdx: breakIdx, _breakId: b.break_id, _url: resolved, ...data };
+    renderBreakPanel('jit');
+    // If ads came back, upgrade the pill from "No fill" → fetched
+    // Route through triggerFetch so the Ad Server counter increments correctly.
+    if (Array.isArray(data.ads) && data.ads.length > 0) {
+      if (!jitFetched[breakIdx]) triggerFetch('jit', breakIdx);
+    }
+  } catch(_) {}
+}
+
+function renderBreakPanel(mode) {
+  const info = lastBreakInfo[mode];
+  const card = document.getElementById(`break-info-card-${mode}`);
+  if (!card) return;
+  if (!info) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const label = document.getElementById(`break-info-label-${mode}`);
+  if (label) label.textContent = `Break ${(info._breakIdx ?? 0) + 1}`;
+  const urlEl = document.getElementById(`break-url-${mode}`);
+  if (urlEl) { urlEl.href = info._url || ''; urlEl.textContent = info._url || '—'; }
+  const pre = document.getElementById(`break-json-${mode}`);
+  if (pre) pre.textContent = JSON.stringify(info, null, 2);
+}
+
+function toggleBreakPanel(mode) {
+  const body = document.getElementById(`break-body-${mode}`);
+  const chev = document.getElementById(`break-chev-${mode}`);
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  if (chev) chev.classList.toggle('open', !isOpen);
+}
+
+async function refreshSessionJson(mode) {
+  if (!sessions[mode]) return;
+  const data = await loadSessionInfo(sessions[mode], sessionInfoUrls[mode]);
+  if (data) renderSessionPanel(mode, data);
+}
+
+function copySessionId(mode) {
+  const sid = sessions[mode];
+  if (!sid) return;
+  navigator.clipboard.writeText(sid).then(() => {
+    const btn = document.getElementById(`copy-sid-${mode}`);
+    if (!btn) return;
+    const orig = btn.textContent;
+    btn.textContent = '✓';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  }).catch(() => {});
+}
+
+/* ============================================================
+   AD COUNTDOWN OVERLAY
+   Docs: configure-ssai-for-vod-content#customize-the-viewer-experience
+   Shows "Ad X of Y · 0:12" on the video during each ad break.
+   ============================================================ */
+function updateAdCountdown(id, video) {
+  const el = document.getElementById(`ad-countdown-${id}`);
+  if (!el) return;
+  if (!countdownEnabled || !video.duration) { el.classList.remove('visible'); return; }
+
+  const t = video.currentTime;
+  const breaks = getBreaks(id);
+
+  // Find which break the playhead is currently inside
+  let activeBreak = null;
+  for (let i = 0; i < breaks.length; i++) {
+    const b = breaks[i];
+    if (!b) continue;
+    const start = b.time_offset || 0;
+    const end   = start + (b.duration || 0);
+    if (t >= start && t < end) { activeBreak = b; break; }
+  }
+
+  if (!activeBreak || !activeBreak.ads?.length) { el.classList.remove('visible'); return; }
+
+  const elapsed        = t - (activeBreak.time_offset || 0);
+  const filledDuration = activeBreak.ads.reduce((s, a) => s + (a.duration || 0), 0);
+  if (elapsed >= filledDuration) { el.classList.remove('visible'); return; } // in filler, not ad
+
+  // Which ad within the break are we on?
+  let cumDur = 0, adNum = 1, adRemaining = 0;
+  for (let i = 0; i < activeBreak.ads.length; i++) {
+    const dur = activeBreak.ads[i].duration || 0;
+    cumDur += dur;
+    if (elapsed < cumDur) {
+      adNum = i + 1;
+      adRemaining = Math.max(0, cumDur - elapsed);
+      break;
+    }
+  }
+
+  const totalAds = activeBreak.ads.length;
+  const mins = Math.floor(adRemaining / 60);
+  const secs = Math.floor(adRemaining % 60);
+  const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+  el.innerHTML = `Ad ${adNum} of ${totalAds} <span class="adc-sep">·</span> <span class="adc-time">${timeStr}</span>`;
+  el.classList.add('visible');
+}
+
+function toggleCountdown() {
+  countdownEnabled = !countdownEnabled;
+  ['stitch', 'jit'].forEach(id => {
+    document.getElementById(`countdown-toggle-${id}`)?.classList.toggle('active', countdownEnabled);
+    if (!countdownEnabled) document.getElementById(`ad-countdown-${id}`)?.classList.remove('visible');
   });
 }
 
@@ -1389,17 +1855,25 @@ function syncBreakTimings(breaks) {
     BREAK_STREAM_TRIGGERS[i]       = Math.max(0, b.time_offset - 2.5);
     BREAK_OFFSETS[i]               = b.time_offset;
     // Extend tracking arrays if this media has more breaks than the initial defaults
-    if (i >= jitFetched.length)      { jitFetched.push(false);      }
-    if (i >= jitImpressed.length)    { jitImpressed.push(false);    }
-    if (i >= stitchImpressed.length) { stitchImpressed.push(false); }
+    if (i >= jitFetched.length)        { jitFetched.push(false);        }
+    if (i >= jitImpressed.length)      { jitImpressed.push(false);      }
+    if (i >= stitchImpressed.length)   { stitchImpressed.push(false);   }
+    if (i >= jitFillerSkipped.length)          { jitFillerSkipped.push(false);          }
+    if (i >= breakInfoFetched.stitch.length)   { breakInfoFetched.stitch.push(false);   }
+    if (i >= breakInfoFetched.jit.length)      { breakInfoFetched.jit.push(false);      }
+    if (i >= breakNoFillVerified.length)       { breakNoFillVerified.push(false);       }
   });
   // Trim arrays if this media has fewer breaks than the defaults
   BREAK_IMPRESSION_THRESHOLDS.length = breaks.length;
   BREAK_STREAM_TRIGGERS.length       = breaks.length;
   BREAK_OFFSETS.length               = breaks.length;
-  jitFetched.length      = breaks.length;
-  jitImpressed.length    = breaks.length;
-  stitchImpressed.length = breaks.length;
+  jitFetched.length        = breaks.length;
+  jitImpressed.length      = breaks.length;
+  stitchImpressed.length   = breaks.length;
+  jitFillerSkipped.length  = breaks.length;
+  breakInfoFetched.stitch.length = breaks.length;
+  breakInfoFetched.jit.length    = breaks.length;
+  breakNoFillVerified.length     = breaks.length;
   breakTimingsUpdated = true;
 }
 
@@ -1429,8 +1903,9 @@ function renderSessionPanel(mode, liveData) {
         if (!hasAds) {
           el.className = 't-ad unfilled'; el.textContent = 'No fill'; // ads_requested=true but null/empty ads
         } else if (!el.classList.contains('fetched') && !el.classList.contains('fetching')) {
-          el.className = 't-ad fetched'; el.textContent = 'Ad';
-          if (!jitFetched[i]) { jitFetched[i] = true; updateRenderBar(mode); }
+          // Route through triggerFetch so the Ad Server counter increments correctly,
+          // even when the session poll resolves the break before checkJITTriggers fires.
+          if (!jitFetched[i]) triggerFetch('jit', i);
         }
       } else {
         // Stitch: ads_requested simulated as always true
@@ -1467,9 +1942,14 @@ async function startSessionTracking(mode, sessionId, sessionInfoUrl) {
   if (sessionId) {
     sessions[mode]        = sessionId;
     sessionInfoUrls[mode] = sessionInfoUrl;
-    sidEl.textContent = sessionId;
-    sidEl.href = sessionInfoUrl
+    const resolvedUrl = sessionInfoUrl
       || `https://cdn.jwplayer.com/v2/sites/${currentSiteId}/media/${currentMediaId}/ssai_session/${sessionId}/info.json`;
+    sidEl.textContent = sessionId;
+    sidEl.href = resolvedUrl;
+    const hdrUrl = document.getElementById(`sjc-url-${mode}`);
+    if (hdrUrl) { hdrUrl.href = resolvedUrl; hdrUrl.textContent = resolvedUrl; }
+    const tagEl = document.getElementById(`sid-tag-${mode}`);
+    if (tagEl) tagEl.textContent = sessionId;
 
     const poll = async () => {
       const data = await loadSessionInfo(sessionId, sessionInfoUrls[mode]);
@@ -1520,6 +2000,8 @@ function teardownMode(id) {
 
   const sidEl = document.getElementById(`sid-${id}`);
   sidEl.textContent = '—'; sidEl.removeAttribute('href');
+  const hdrUrl = document.getElementById(`sjc-url-${id}`);
+  if (hdrUrl) { hdrUrl.textContent = ''; hdrUrl.removeAttribute('href'); }
 
   document.getElementById(`overlay-${id}`)?.classList.remove('hidden');
 
@@ -1547,13 +2029,43 @@ function teardownMode(id) {
   if (bufBar) { bufBar.style.display = 'none'; bufBar.style.width = '0%'; }
   document.getElementById(`buf-toggle-${id}`)?.classList.remove('active');
 
-  // Reset manifest URL row
+  // Hide countdown overlay
+  document.getElementById(`ad-countdown-${id}`)?.classList.remove('visible');
+
+  // Reset manifest URL collapsible
   const murlRow = document.getElementById(`murl-row-${id}`);
   if (murlRow) murlRow.style.display = 'none';
-  document.getElementById(`murl-toggle-${id}`)?.classList.remove('active');
+  document.getElementById(`murl-chev-${id}`)?.classList.remove('open');
   const murlLink = document.getElementById(`murl-link-${id}`);
   if (murlLink) { murlLink.href = ''; murlLink.textContent = '—'; }
   manifestUrls[id] = null;
+
+  // Reset break info panel
+  lastBreakInfo[id] = null;
+  const breakCard = document.getElementById(`break-info-card-${id}`);
+  if (breakCard) breakCard.style.display = 'none';
+  const breakBody = document.getElementById(`break-body-${id}`);
+  if (breakBody) breakBody.style.display = 'none';
+  document.getElementById(`break-chev-${id}`)?.classList.remove('open');
+  const breakUrlEl = document.getElementById(`break-url-${id}`);
+  if (breakUrlEl) { breakUrlEl.href = ''; breakUrlEl.textContent = '—'; }
+  const sidTag = document.getElementById(`sid-tag-${id}`);
+  if (sidTag) sidTag.textContent = '—';
+
+  // Reset JIT-only UI to default-on state on teardown
+  if (id === 'jit') {
+    const warn = document.getElementById('jit-warning');
+    if (warn) warn.style.display = 'none';
+    // Restore buffer bar to default-on
+    const bufBar = document.getElementById('buf-jit');
+    if (bufBar) { bufBar.style.display = 'block'; bufBar.style.width = '0%'; }
+    document.getElementById('buf-toggle-jit')?.classList.add('active');
+    // Restore JIT-only feature rows in case they were hidden
+    const bufRow  = document.getElementById('buf-toggle-jit')?.closest('.dev-feature');
+    if (bufRow) bufRow.style.display = '';
+    const skipRow = document.getElementById('skipfiller-toggle')?.closest('.dev-feature');
+    if (skipRow) skipRow.style.display = '';
+  }
 }
 
 function teardownAll() {
@@ -1568,20 +2080,27 @@ function teardownAll() {
   animsDone.stitch = false; animsDone.jit = false;
   pendingTimelines.stitch = null; pendingTimelines.jit = null;
   // Reset tracking arrays to 3-slot defaults (syncBreakTimings will resize on next load)
-  jitFetched.length = 3;      jitFetched.fill(false);
-  jitImpressed.length = 3;    jitImpressed.fill(false);
-  stitchImpressed.length = 3; stitchImpressed.fill(false);
+  jitFetched.length = 3;       jitFetched.fill(false);
+  jitImpressed.length = 3;     jitImpressed.fill(false);
+  stitchImpressed.length = 3;  stitchImpressed.fill(false);
+  jitFillerSkipped.length = 3;    jitFillerSkipped.fill(false);
+  breakNoFillVerified.length = 3; breakNoFillVerified.fill(false);
   BREAK_IMPRESSION_THRESHOLDS.length = 3;
   BREAK_STREAM_TRIGGERS.length = 3;
   BREAK_OFFSETS.length = 3;
+  breakInfoFetched.stitch.length = 3; breakInfoFetched.stitch.fill(false);
+  breakInfoFetched.jit.length    = 3; breakInfoFetched.jit.fill(false);
   document.getElementById('jit-rf').style.width = '0%';
   document.getElementById('jit-rp').textContent = '—';
   document.getElementById('fetch-toast').classList.remove('show');
+  document.getElementById('skip-toast').classList.remove('show');
+  clearTimeout(skipToastTimer);
   document.getElementById('stitch-rf').style.width      = '0%';
   document.getElementById('stitch-rf').style.background = '#E74C3C';
   document.getElementById('stitch-rp').textContent      = '—';
   document.getElementById('stitch-rp').style.color      = '#E74C3C';
   breakTimingsUpdated = false;
+  highWaterMark.stitch = 0; highWaterMark.jit = 0;
   ssaiModes.stitch = null; ssaiModes.jit = null;
   mediaHostingType = null;
   const hostBadge = document.getElementById('hosting-badge');
@@ -1670,6 +2189,12 @@ window.addEventListener('DOMContentLoaded', () => {
   if (params.get('site_id'))      { currentSiteId     = params.get('site_id');      document.getElementById('siteIdInput').value   = currentSiteId; }
   if (params.get('media_id'))     { currentMediaId    = params.get('media_id');     document.getElementById('mediaIdInput').value  = currentMediaId; }
   if (params.get('ad_config_id')) { currentAdConfigId = params.get('ad_config_id'); document.getElementById('adConfigInput').value = currentAdConfigId; }
+
+  // Reflect default-on states in UI
+  document.getElementById('skipfiller-toggle')?.classList.add('active');
+  document.getElementById('countdown-toggle-stitch')?.classList.add('active');
+  document.getElementById('countdown-toggle-jit')?.classList.add('active');
+  document.getElementById('buf-toggle-jit')?.classList.add('active');
 
   // Start unloaded — user must click Load to initialise players
   renderSessionPanel('stitch', null);
