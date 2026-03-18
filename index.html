@@ -1218,6 +1218,7 @@ async function fetchMediaInfo(mid) {
     const src   = (item.sources || [])[0]?.file || '';
     // Update media title display: "Title (mediaId)" or bare ID as fallback
     const title = item.title || item.name || '';
+    if (title) localStorage.setItem(`jit-media-title:${mid}`, title);
     const mediaTitleEl = document.getElementById('view-mediaTitle');
     if (mediaTitleEl) {
       mediaTitleEl.textContent = title ? `${title} (${mid})` : mid;
@@ -2333,10 +2334,10 @@ function saveCookieSettings() {
   document.cookie = `${COOKIE_NAME}=${val};max-age=${60*60*24*365};path=/`;
 }
 function syncMediaViewSpans() {
-  document.getElementById('view-siteId').textContent   = document.getElementById('siteIdInput').value;
   document.getElementById('view-adConfig').textContent = document.getElementById('adConfigInput').value;
-  // Show bare ID as placeholder until fetchMediaInfo resolves the title
-  document.getElementById('view-mediaTitle').textContent = document.getElementById('mediaIdInput').value;
+  const mid = document.getElementById('mediaIdInput').value;
+  const cached = localStorage.getItem(`jit-media-title:${mid}`);
+  document.getElementById('view-mediaTitle').textContent = cached ? `${cached} (${mid})` : mid;
 }
 function setMediaEditMode(editing) {
   document.getElementById('media-view').style.display = editing ? 'none' : 'flex';
