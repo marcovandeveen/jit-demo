@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Just In Time Insertion · JWX Demo</title>
+  <title>VOD Just In Time Insertion</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
@@ -311,15 +311,15 @@
     /* ── Buffer bar (absolute overlay on timeline track) ── */
     .buffer-bar {
       position: absolute; top: 0; left: 0; height: 32px; width: 0%;
-      background: rgba(0, 149, 255, 0.10);
-      border-right: 2px solid rgba(0, 149, 255, 0.45);
+      background: rgba(231, 76, 60, 0.10);
+      border-right: 2px solid rgba(231, 76, 60, 0.55);
       border-radius: 5px 0 0 5px;
       pointer-events: none; z-index: 5;
       transition: width .35s linear;
     }
     .buffer-float {
       position: absolute; right: -22px; top: 50%; transform: translateY(-50%);
-      background: rgba(0, 149, 255, 0.85); color: #fff;
+      background: rgba(231, 76, 60, 0.90); color: #fff;
       font-size: 0.55rem; font-weight: 700; padding: 1px 4px;
       border-radius: 3px; white-space: nowrap; pointer-events: none;
       z-index: 6;
@@ -497,6 +497,15 @@
     .sjc-url-row { padding: 6px 12px; border-bottom: 1px solid var(--g2); background: var(--g1); }
     .sjc-url-link { font-family: monospace; font-size: 0.65rem; color: var(--blue); word-break: break-all; text-decoration: none; display: block; }
     .sjc-url-link:hover { text-decoration: underline; }
+    /* Response headers table */
+    .resp-headers-label { font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); padding: 6px 12px 3px; display: block; border-top: 1px solid var(--g2); }
+    .resp-headers { border-bottom: 1px solid var(--g2); }
+    .resp-hdr-row { display: flex; align-items: baseline; gap: 10px; padding: 5px 12px; border-bottom: 1px solid var(--g2); background: var(--g1); }
+    .resp-hdr-row:last-child { border-bottom: none; }
+    .resp-hdr-key { font-family: monospace; font-size: 0.58rem; color: var(--muted); flex-shrink: 0; width: 170px; }
+    .resp-hdr-val { font-family: monospace; font-size: 0.6rem; color: var(--text); word-break: break-all; }
+    .resp-hdr-val a { color: var(--blue); text-decoration: none; }
+    .resp-hdr-val a:hover { text-decoration: underline; }
     .sjc-header {
       background: var(--g1); color: var(--muted); padding: 6px 12px;
       display: flex; align-items: center; gap: 8px;
@@ -596,6 +605,20 @@
       border-radius: 6px; color: var(--text); width: 86px; outline: none;
     }
     .media-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(0,149,255,.12); }
+    .media-view { display: flex; align-items: center; gap: 7px; }
+    .media-edit-fields { display: flex; align-items: center; gap: 7px; }
+    .media-val { font-family: monospace; font-size: 0.8rem; font-weight: 600; color: var(--text); }
+    .media-sep { color: var(--g3); font-size: 0.9rem; }
+    .media-edit-btn {
+      background: none; border: 1px solid var(--g3); border-radius: 4px;
+      cursor: pointer; color: var(--muted); font-size: 0.72rem; padding: 3px 7px; line-height: 1;
+    }
+    .media-edit-btn:hover { color: var(--text); border-color: var(--muted); }
+    .media-done-btn {
+      background: var(--blue); color: #fff; border: none; cursor: pointer;
+      font-size: 0.72rem; font-weight: 600; padding: 5px 11px; border-radius: 5px;
+    }
+    .media-done-btn:hover { opacity: 0.85; }
 
     /* ── Grid items: subgrid so rows align across both columns ── */
     .player-col { min-width: 0; display: grid; grid-row: span 8; grid-template-rows: subgrid; }
@@ -624,7 +647,7 @@
       .col-head .subtitle { display: none; }
       /* Hide label badges (adconfig, hosting type, stitch mode) */
       .badge-row { display: none; }
-      /* Hide Live Session Data panels */
+      /* Hide Live Session panels */
       .session-panel { display: none; }
       /* Tighten col-head */
       .col-head { margin-bottom: 6px; }
@@ -684,14 +707,30 @@
   <button class="btn btn-primary"   id="btnSync" disabled>▶&nbsp;&nbsp;Play Both</button>
   <button class="btn btn-secondary" id="btnReset">↺&nbsp;&nbsp;Reset</button>
   <div class="media-chooser">
-    <span class="media-label">Site ID</span>
-    <input type="text" id="siteIdInput" class="media-input" value="CRhqa29o" spellcheck="false">
-    <span class="media-label">Media ID</span>
-    <input type="text" id="mediaIdInput" class="media-input" value="jUnzhbbH" spellcheck="false">
-    <span class="media-label">Ad Config</span>
-    <input type="text" id="adConfigInput" class="media-input" value="LIvxq0u2" spellcheck="false">
-    <span id="hosting-badge" class="meta-badge" style="display:none"></span>
-    <span id="loadDefaultsLink" class="load-defaults-link">load defaults</span>
+    <!-- View mode (default) -->
+    <div class="media-view" id="media-view">
+      <span class="media-label">Site ID</span>
+      <span class="media-val" id="view-siteId">CRhqa29o</span>
+      <span class="media-sep">·</span>
+      <span class="media-label">Media ID</span>
+      <span class="media-val" id="view-mediaId">jUnzhbbH</span>
+      <span class="media-sep">·</span>
+      <span class="media-label">Ad Config</span>
+      <span class="media-val" id="view-adConfig">LIvxq0u2</span>
+      <span id="hosting-badge" class="meta-badge" style="display:none"></span>
+      <button class="media-edit-btn" onclick="setMediaEditMode(true)">✏ Edit</button>
+    </div>
+    <!-- Edit mode -->
+    <div class="media-edit-fields" id="media-edit" style="display:none">
+      <span class="media-label">Site ID</span>
+      <input type="text" id="siteIdInput" class="media-input" value="CRhqa29o" spellcheck="false">
+      <span class="media-label">Media ID</span>
+      <input type="text" id="mediaIdInput" class="media-input" value="jUnzhbbH" spellcheck="false">
+      <span class="media-label">Ad Config</span>
+      <input type="text" id="adConfigInput" class="media-input" value="LIvxq0u2" spellcheck="false">
+      <span id="loadDefaultsLink" class="load-defaults-link">load defaults</span>
+      <button class="media-done-btn" onclick="setMediaEditMode(false)">✓ Done</button>
+    </div>
   </div>
 </div>
 
@@ -740,16 +779,18 @@
         </div>
         <div class="timeline-legend">
           <div class="legend-item"><div class="legend-swatch" style="background:var(--navy)"></div>Content</div>
+          <div class="legend-item"><div class="legend-swatch" style="background:transparent;border:2px dashed var(--blue)"></div>Pending</div>
           <div class="legend-item"><div class="legend-swatch" style="background:var(--blue)"></div>Stitched</div>
           <div class="legend-item"><div class="legend-swatch" style="background:var(--dkgrn)"></div>Impressed</div>
           <div class="legend-item"><div class="legend-swatch" style="background:repeating-linear-gradient(45deg,rgba(243,156,18,.25) 0px,rgba(243,156,18,.25) 4px,transparent 4px,transparent 8px);border:2px dashed var(--amber)"></div>No-fill</div>
+          <div class="legend-item"><div class="legend-swatch" style="background:rgba(231,76,60,0.12);border-right:3px solid rgba(231,76,60,0.60)"></div>Buffer</div>
         </div>
         <div class="render-row">
           <div class="render-label">Render</div>
           <div class="render-track"><div class="render-fill" id="stitch-rf" style="width:0%;background:#E74C3C;transition:width 1.2s ease"></div></div>
           <div class="render-pct"   id="stitch-rp" style="color:#E74C3C">—</div>
         </div>
-        <div class="render-note" id="render-note-stitch">Ads stitched upfront. Only reaches 100% if the viewer watches every break.</div>
+        <div class="render-note" id="render-note-stitch" style="display:none"></div>
       </div>
 
       <!-- Features section -->
@@ -787,34 +828,33 @@
               <span class="sjc-chevron" id="murl-chev-stitch">▼</span>
             </div>
             <div class="sjc-body" id="murl-row-stitch" style="display:none">
-              <div style="padding:8px 12px"><a class="murl-link" id="murl-link-stitch" target="_blank" rel="noopener">—</a></div>
+              <div class="sjc-url-row"><a class="sjc-url-link" id="murl-link-stitch" target="_blank" rel="noopener">—</a></div>
+              <span class="resp-headers-label">Response Headers</span>
+              <div class="resp-headers">
+                <div class="resp-hdr-row">
+                  <span class="resp-hdr-key">x-jw-ssai-session-id</span>
+                  <span class="resp-hdr-val" id="murl-rhdr-sid-stitch">—</span>
+                </div>
+                <div class="resp-hdr-row">
+                  <span class="resp-hdr-key">x-jw-ssai-session</span>
+                  <span class="resp-hdr-val" id="murl-rhdr-session-stitch">—</span>
+                </div>
+                <div class="resp-hdr-row">
+                  <span class="resp-hdr-key">x-jw-ssai-workflow</span>
+                  <span class="resp-hdr-val" id="murl-rhdr-workflow-stitch">—</span>
+                </div>
+              </div>
             </div>
           </div>
           <div class="session-json-card">
             <div class="sjc-header" onclick="toggleSessionJSON('stitch')">
-              <span class="sjc-title">Session JSON</span>
+              <span class="sjc-title">Session</span>
               <a class="sjc-doc-link" href="https://docs.jwplayer.com/platform/reference/get_v2-sites-site-id-media-media-id-ssai-session-ssai-session-id-info-json" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="GET /v2/sites/{site_id}/media/{media_id}/ssai_session/{ssai_session_id}/info.json">↗ API ref</a>
-              <a class="sjc-link" id="sjc-url-stitch" onclick="event.stopPropagation()" target="_blank" rel="noopener"></a>
-              <span class="sjc-actions" onclick="event.stopPropagation()">
-                <button class="sjc-btn" id="copy-sid-stitch" onclick="copySessionId('stitch')" title="Copy session ID">⎘</button>
-                <button class="sjc-btn" onclick="refreshSessionJson('stitch')" title="Refresh session JSON">↻</button>
-              </span>
               <span class="sjc-chevron" id="sjc-chev-stitch">▼</span>
             </div>
             <div class="sjc-body" id="sjc-body-stitch" style="display:none">
-              <div class="sjc-url-row"><a class="sjc-url-link" id="sid-stitch" href="" target="_blank" rel="noopener">—</a></div>
+              <a class="sjc-url-link" id="sid-stitch" href="" target="_blank" rel="noopener" style="display:none"></a>
               <pre class="sjc-pre" id="session-json-stitch">Waiting for session data…</pre>
-            </div>
-          </div>
-          <div class="session-json-card" id="break-info-card-stitch" style="display:none">
-            <div class="sjc-header" onclick="toggleBreakPanel('stitch')">
-              <span class="sjc-title">Last ad break info</span>
-              <span class="sjc-break-label" id="break-info-label-stitch"></span>
-              <span class="sjc-chevron" id="break-chev-stitch">▼</span>
-            </div>
-            <div class="sjc-body" id="break-body-stitch" style="display:none">
-              <div class="sjc-url-row"><a class="sjc-url-link" id="break-url-stitch" href="" target="_blank" rel="noopener">—</a></div>
-              <pre class="sjc-pre" id="break-json-stitch"></pre>
             </div>
           </div>
         </div>
@@ -828,7 +868,7 @@
         <div class="badge-row">
           <div class="col-meta" id="col-meta-jit"></div>
         </div>
-        <p class="subtitle" id="col-sub-jit">Ad requests are made only when the player reaches each break, with no wasted stitching.</p>
+        <p class="subtitle" id="col-sub-jit">Ad requests are made only when the player fetches the ad segment, with no wasted stitching.</p>
         <div class="jit-warning" id="jit-warning" style="display:none">⚠ Standard insertion is being applied. Onboarding of this asset's streaming profile is required to enable JIT.</div>
       </div>
 
@@ -854,7 +894,7 @@
           <span class="ad-server-box" id="adserver-jit">Ad Server<span class="adserver-count" id="adserver-count-jit">0</span></span>
         </div>
         <div style="position:relative">
-          <div class="buffer-bar" id="buf-jit" style="display:block">
+          <div class="buffer-bar" id="buf-jit" style="display:none">
             <div class="buffer-float" id="buf-float-jit">0s</div>
           </div>
           <!-- Skip filler toast -->
@@ -874,13 +914,14 @@
           <div class="legend-item"><div class="legend-swatch" style="background:var(--blue)"></div>Stitched</div>
           <div class="legend-item"><div class="legend-swatch" style="background:var(--dkgrn)"></div>Impressed</div>
           <div class="legend-item"><div class="legend-swatch" style="background:repeating-linear-gradient(45deg,rgba(243,156,18,.25) 0px,rgba(243,156,18,.25) 4px,transparent 4px,transparent 8px);border:2px dashed var(--amber)"></div>No-fill</div>
+          <div class="legend-item"><div class="legend-swatch" style="background:rgba(231,76,60,0.12);border-right:3px solid rgba(231,76,60,0.60)"></div>Buffer</div>
         </div>
         <div class="render-row">
           <div class="render-label">Render</div>
           <div class="render-track"><div class="render-fill" id="jit-rf" style="width:0%;background:var(--green);transition:width 1.5s ease"></div></div>
           <div class="render-pct"   id="jit-rp" style="color:var(--green)">—</div>
         </div>
-        <div class="render-note" id="render-note-jit">Ads are stitched when the player fetches the ad segment, keeping render rate near 100%.</div>
+        <div class="render-note" id="render-note-jit" style="display:none"></div>
       </div>
 
       <!-- Features section -->
@@ -897,16 +938,12 @@
               <p class="dev-feat-desc">Overlays "Ad X of Y · 0:12" on the video during ad breaks. Uses session endpoint data to determine the number of ads and their durations within each break.</p>
             </div>
             <div class="dev-feature">
-              <span class="tl-toggle" id="skipfiller-toggle" onclick="toggleSkipFiller()">Skip filler</span>
-              <p class="dev-feat-desc">Automatically seeks past unfilled filler time at the end of each break. Uses session endpoint data to detect the gap between total break duration and actual ad fill.</p>
-            </div>
-            <div class="dev-feature">
               <span class="tl-toggle" id="ffwd-toggle-jit" onclick="toggleBlockFFWD()">Block FFWD</span>
               <p class="dev-feat-desc">Prevents the viewer from seeking forward past content they haven't watched yet. Simulates a linear viewing experience.</p>
             </div>
             <div class="dev-feature">
-              <span class="tl-toggle" id="buf-toggle-jit" onclick="toggleBufferBar('jit')">Show buffer</span>
-              <p class="dev-feat-desc">Visualises the player's buffer depth on the timeline. In JIT mode the buffer edge triggers the next ad fetch as buffering approaches each break point.</p>
+              <span class="tl-toggle" id="skipfiller-toggle" onclick="toggleSkipFiller()">Skip filler</span>
+              <p class="dev-feat-desc">Automatically seeks past unfilled filler time at the end of each break. Uses session endpoint data to detect the gap between total break duration and actual ad fill.</p>
             </div>
           </div>
         </div>
@@ -926,34 +963,33 @@
               <span class="sjc-chevron" id="murl-chev-jit">▼</span>
             </div>
             <div class="sjc-body" id="murl-row-jit" style="display:none">
-              <div style="padding:8px 12px"><a class="murl-link" id="murl-link-jit" target="_blank" rel="noopener">—</a></div>
+              <div class="sjc-url-row"><a class="sjc-url-link" id="murl-link-jit" target="_blank" rel="noopener">—</a></div>
+              <span class="resp-headers-label">Response Headers</span>
+              <div class="resp-headers">
+                <div class="resp-hdr-row">
+                  <span class="resp-hdr-key">x-jw-ssai-session-id</span>
+                  <span class="resp-hdr-val" id="murl-rhdr-sid-jit">—</span>
+                </div>
+                <div class="resp-hdr-row">
+                  <span class="resp-hdr-key">x-jw-ssai-session</span>
+                  <span class="resp-hdr-val" id="murl-rhdr-session-jit">—</span>
+                </div>
+                <div class="resp-hdr-row">
+                  <span class="resp-hdr-key">x-jw-ssai-workflow</span>
+                  <span class="resp-hdr-val" id="murl-rhdr-workflow-jit">—</span>
+                </div>
+              </div>
             </div>
           </div>
           <div class="session-json-card">
             <div class="sjc-header" onclick="toggleSessionJSON('jit')">
-              <span class="sjc-title">Session JSON</span>
+              <span class="sjc-title">Session</span>
               <a class="sjc-doc-link" href="https://docs.jwplayer.com/platform/reference/get_v2-sites-site-id-media-media-id-ssai-session-ssai-session-id-info-json" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="GET /v2/sites/{site_id}/media/{media_id}/ssai_session/{ssai_session_id}/info.json">↗ API ref</a>
-              <a class="sjc-link" id="sjc-url-jit" onclick="event.stopPropagation()" target="_blank" rel="noopener"></a>
-              <span class="sjc-actions" onclick="event.stopPropagation()">
-                <button class="sjc-btn" id="copy-sid-jit" onclick="copySessionId('jit')" title="Copy session ID">⎘</button>
-                <button class="sjc-btn" onclick="refreshSessionJson('jit')" title="Refresh session JSON">↻</button>
-              </span>
               <span class="sjc-chevron" id="sjc-chev-jit">▼</span>
             </div>
             <div class="sjc-body" id="sjc-body-jit" style="display:none">
-              <div class="sjc-url-row"><a class="sjc-url-link" id="sid-jit" href="" target="_blank" rel="noopener">—</a></div>
+              <a class="sjc-url-link" id="sid-jit" href="" target="_blank" rel="noopener" style="display:none"></a>
               <pre class="sjc-pre" id="session-json-jit">Waiting for session data…</pre>
-            </div>
-          </div>
-          <div class="session-json-card" id="break-info-card-jit" style="display:none">
-            <div class="sjc-header" onclick="toggleBreakPanel('jit')">
-              <span class="sjc-title">Last ad break info</span>
-              <span class="sjc-break-label" id="break-info-label-jit"></span>
-              <span class="sjc-chevron" id="break-chev-jit">▼</span>
-            </div>
-            <div class="sjc-body" id="break-body-jit" style="display:none">
-              <div class="sjc-url-row"><a class="sjc-url-link" id="break-url-jit" href="" target="_blank" rel="noopener">—</a></div>
-              <pre class="sjc-pre" id="break-json-jit"></pre>
             </div>
           </div>
         </div>
@@ -1102,7 +1138,7 @@ function applyDetectedMode(id) {
   if (isJIT) {
     titleEl.textContent = 'JIT Insertion';
     if (badgeEl) badgeEl.className = 'mode-badge jit';
-    subEl.textContent   = 'Ad requests are made only when the player reaches each break, with no wasted stitching.';
+    subEl.textContent   = 'Ad requests are made only when the player fetches the ad segment, with no wasted stitching.';
     if (noteEl) noteEl.textContent = 'Ads are stitched when the player fetches the ad segment, keeping render rate near 100%.';
   } else {
     titleEl.textContent = 'Standard Insertion';
@@ -1113,10 +1149,7 @@ function applyDetectedMode(id) {
     if (id === 'jit') {
       const bufBar = document.getElementById('buf-jit');
       if (bufBar) { bufBar.style.display = 'none'; bufBar.style.width = '0%'; }
-      document.getElementById('buf-toggle-jit')?.classList.remove('active');
       const featJIT = document.getElementById('feat-body-jit');
-      const bufRow  = document.getElementById('buf-toggle-jit')?.closest('.dev-feature');
-      if (bufRow) bufRow.style.display = 'none';
       const skipRow = document.getElementById('skipfiller-toggle')?.closest('.dev-feature');
       if (skipRow) skipRow.style.display = 'none';
     }
@@ -1220,6 +1253,11 @@ function initPlayer(id, url) {
   manifestUrls[id] = url;
   const murlLink = document.getElementById(`murl-link-${id}`);
   if (murlLink) { murlLink.href = url; murlLink.textContent = url; }
+  // Show buffer bar for JIT once a video is actually loaded
+  if (id === 'jit') {
+    const bufBar = document.getElementById('buf-jit');
+    if (bufBar) bufBar.style.display = 'block';
+  }
 
   const video = document.getElementById(`vid-${id}`);
 
@@ -1257,10 +1295,25 @@ function initPlayer(id, url) {
         ? (h) => net.getResponseHeader(h)
         : (h) => net.headers?.get(h);
       // Prefer header; fall back to session ID embedded in redirected manifest URL
-      const sid     = getHeader('x-jw-ssai-session-id')
-                   || (data.url || '').match(/ssai_session\/([^\/\?]+)/)?.[1];
-      const infoUrl = getHeader('x-jw-ssai-session');
+      const sid      = getHeader('x-jw-ssai-session-id')
+                    || (data.url || '').match(/ssai_session\/([^\/\?]+)/)?.[1];
+      const infoUrl  = getHeader('x-jw-ssai-session');
+      const workflow = getHeader('x-jw-ssai-workflow');
       const strategyB64  = getHeader('x-jw-ssai-strategy-action');
+      // Populate response header rows in Session card
+      const rhdrSid = document.getElementById(`rhdr-sid-${id}`);
+      if (rhdrSid) rhdrSid.textContent = sid || '—';
+      const rhdrWorkflow = document.getElementById(`rhdr-workflow-${id}`);
+      if (rhdrWorkflow) rhdrWorkflow.textContent = workflow || '—';
+      const sidLinkEl = document.getElementById(`sid-${id}`);
+      if (sidLinkEl && infoUrl) { sidLinkEl.textContent = infoUrl; sidLinkEl.href = infoUrl; }
+      // Populate response header rows in Manifest URL card
+      const murlSid      = document.getElementById(`murl-rhdr-sid-${id}`);
+      if (murlSid) murlSid.textContent = sid || '—';
+      const murlSession   = document.getElementById(`murl-rhdr-session-${id}`);
+      if (murlSession) murlSession.textContent = infoUrl || '—';
+      const murlWorkflow  = document.getElementById(`murl-rhdr-workflow-${id}`);
+      if (murlWorkflow) murlWorkflow.textContent = workflow || '—';
       if (strategyB64) {
         try {
           const decoded = JSON.parse(atob(strategyB64));
@@ -1452,6 +1505,8 @@ function checkImpressions(mode, t) {
    ============================================================ */
 function checkJITTriggers(t) {
   BREAK_STREAM_TRIGGERS.forEach((threshold, i) => {
+    // Skip preroll (i=0, threshold=0) — scheduleAdAnimations owns that animation
+    if (i === 0 && threshold === 0) return;
     if (!jitFetched[i] && t >= threshold) triggerFetch('jit', i);
   });
 }
@@ -1571,8 +1626,7 @@ function renderBreakPanel(mode) {
   const info = lastBreakInfo[mode];
   const card = document.getElementById(`break-info-card-${mode}`);
   if (!card) return;
-  if (!info) { card.style.display = 'none'; return; }
-  card.style.display = '';
+  if (!info) return; // card always visible; just leave content as-is
   const label = document.getElementById(`break-info-label-${mode}`);
   if (label) label.textContent = `Break ${(info._breakIdx ?? 0) + 1}`;
   const urlEl = document.getElementById(`break-url-${mode}`);
@@ -1802,6 +1856,7 @@ function scheduleAdAnimations(mode, breaks) {
     if (breaks[0]?.time_offset === 0) {
       // Preroll: fire animation; segments are already buffered so impression fires immediately after fetch
       setTimeout(() => {
+        if (jitFetched[0]) { checkImpressions('jit', 0); markDone(); return; } // already triggered elsewhere
         triggerFetch('jit', 0);
         setTimeout(() => {
           // Preroll segments already in player buffer → count as impressed
@@ -1944,8 +1999,13 @@ async function startSessionTracking(mode, sessionId, sessionInfoUrl) {
     sessionInfoUrls[mode] = sessionInfoUrl;
     const resolvedUrl = sessionInfoUrl
       || `https://cdn.jwplayer.com/v2/sites/${currentSiteId}/media/${currentMediaId}/ssai_session/${sessionId}/info.json`;
-    sidEl.textContent = sessionId;
-    sidEl.href = resolvedUrl;
+    // Show the URL as link text (session ID already shown in rhdr-sid-* row)
+    if (!sidEl.href || sidEl.textContent === '—') {
+      sidEl.textContent = resolvedUrl;
+      sidEl.href = resolvedUrl;
+    }
+    const rhdrSid = document.getElementById(`rhdr-sid-${mode}`);
+    if (rhdrSid && rhdrSid.textContent === '—') rhdrSid.textContent = sessionId;
     const hdrUrl = document.getElementById(`sjc-url-${mode}`);
     if (hdrUrl) { hdrUrl.href = resolvedUrl; hdrUrl.textContent = resolvedUrl; }
     const tagEl = document.getElementById(`sid-tag-${mode}`);
@@ -2002,6 +2062,10 @@ function teardownMode(id) {
   sidEl.textContent = '—'; sidEl.removeAttribute('href');
   const hdrUrl = document.getElementById(`sjc-url-${id}`);
   if (hdrUrl) { hdrUrl.textContent = ''; hdrUrl.removeAttribute('href'); }
+  const rhdrSid = document.getElementById(`rhdr-sid-${id}`);
+  if (rhdrSid) rhdrSid.textContent = '—';
+  const rhdrWorkflow = document.getElementById(`rhdr-workflow-${id}`);
+  if (rhdrWorkflow) rhdrWorkflow.textContent = '—';
 
   document.getElementById(`overlay-${id}`)?.classList.remove('hidden');
 
@@ -2039,13 +2103,22 @@ function teardownMode(id) {
   const murlLink = document.getElementById(`murl-link-${id}`);
   if (murlLink) { murlLink.href = ''; murlLink.textContent = '—'; }
   manifestUrls[id] = null;
+  const murlSid = document.getElementById(`murl-rhdr-sid-${id}`);
+  if (murlSid) murlSid.textContent = '—';
+  const murlSession = document.getElementById(`murl-rhdr-session-${id}`);
+  if (murlSession) murlSession.textContent = '—';
+  const murlWorkflow = document.getElementById(`murl-rhdr-workflow-${id}`);
+  if (murlWorkflow) murlWorkflow.textContent = '—';
 
   // Reset break info panel
   lastBreakInfo[id] = null;
-  const breakCard = document.getElementById(`break-info-card-${id}`);
-  if (breakCard) breakCard.style.display = 'none';
   const breakBody = document.getElementById(`break-body-${id}`);
   if (breakBody) breakBody.style.display = 'none';
+  document.getElementById(`break-chev-${id}`)?.classList.remove('open');
+  const breakPre = document.getElementById(`break-json-${id}`);
+  if (breakPre) breakPre.textContent = '';
+  const breakLabel = document.getElementById(`break-info-label-${id}`);
+  if (breakLabel) breakLabel.textContent = '';
   document.getElementById(`break-chev-${id}`)?.classList.remove('open');
   const breakUrlEl = document.getElementById(`break-url-${id}`);
   if (breakUrlEl) { breakUrlEl.href = ''; breakUrlEl.textContent = '—'; }
@@ -2059,10 +2132,7 @@ function teardownMode(id) {
     // Restore buffer bar to default-on
     const bufBar = document.getElementById('buf-jit');
     if (bufBar) { bufBar.style.display = 'block'; bufBar.style.width = '0%'; }
-    document.getElementById('buf-toggle-jit')?.classList.add('active');
     // Restore JIT-only feature rows in case they were hidden
-    const bufRow  = document.getElementById('buf-toggle-jit')?.closest('.dev-feature');
-    if (bufRow) bufRow.style.display = '';
     const skipRow = document.getElementById('skipfiller-toggle')?.closest('.dev-feature');
     if (skipRow) skipRow.style.display = '';
   }
@@ -2125,6 +2195,17 @@ function saveCookieSettings() {
   ].join('|');
   document.cookie = `${COOKIE_NAME}=${val};max-age=${60*60*24*365};path=/`;
 }
+function syncMediaViewSpans() {
+  document.getElementById('view-siteId').textContent   = document.getElementById('siteIdInput').value;
+  document.getElementById('view-mediaId').textContent  = document.getElementById('mediaIdInput').value;
+  document.getElementById('view-adConfig').textContent = document.getElementById('adConfigInput').value;
+}
+function setMediaEditMode(editing) {
+  document.getElementById('media-view').style.display        = editing ? 'none' : 'flex';
+  document.getElementById('media-edit').style.display        = editing ? 'flex' : 'none';
+  if (!editing) syncMediaViewSpans();
+  if (editing)  document.getElementById('siteIdInput').focus();
+}
 function loadCookieSettings() {
   const match = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith(COOKIE_NAME + '='));
   if (!match) return;
@@ -2132,6 +2213,7 @@ function loadCookieSettings() {
   if (parts[0]) { currentSiteId     = parts[0]; document.getElementById('siteIdInput').value   = parts[0]; }
   if (parts[1]) { currentMediaId    = parts[1]; document.getElementById('mediaIdInput').value  = parts[1]; }
   if (parts[2]) { currentAdConfigId = parts[2]; document.getElementById('adConfigInput').value = parts[2]; }
+  syncMediaViewSpans();
 }
 function resetToDefaults() {
   currentSiteId     = DEFAULTS.siteId;
@@ -2141,6 +2223,8 @@ function resetToDefaults() {
   document.getElementById('mediaIdInput').value  = DEFAULTS.mediaId;
   document.getElementById('adConfigInput').value = DEFAULTS.adConfigId;
   document.cookie = `${COOKIE_NAME}=;max-age=0;path=/`; // clear cookie
+  syncMediaViewSpans();
+  setMediaEditMode(false);
 }
 
 function loadMedia(mid) {
@@ -2194,7 +2278,6 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('skipfiller-toggle')?.classList.add('active');
   document.getElementById('countdown-toggle-stitch')?.classList.add('active');
   document.getElementById('countdown-toggle-jit')?.classList.add('active');
-  document.getElementById('buf-toggle-jit')?.classList.add('active');
 
   // Start unloaded — user must click Load to initialise players
   renderSessionPanel('stitch', null);
