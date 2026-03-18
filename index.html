@@ -1069,8 +1069,8 @@ const _urlMode = new URLSearchParams(window.location.search).get('stitch_mode');
 const stitchColMode = _urlMode === 'jit'  ? 'jit'  : 'ssai';
 const jitColMode    = _urlMode === 'ssai' ? 'ssai' : 'jit';
 
-const stitchUrl = (mid) => `https://cdn.jwplayer.com/v2/sites/${currentSiteId}/media/${mid}/ssai.m3u8?ad_config_id=${currentAdConfigId}&stitch_mode=${stitchColMode}&reporting_mode=client`;
-const jitUrl    = (mid) => `https://cdn.jwplayer.com/v2/sites/${currentSiteId}/media/${mid}/ssai.m3u8?ad_config_id=${currentAdConfigId}&stitch_mode=${jitColMode}&reporting_mode=client`;
+const stitchUrl = (mid) => `https://cdn.jwplayer.com/v2/sites/${currentSiteId}/media/${mid}/ssai.m3u8?ad_config_id=${currentAdConfigId}&stitch_mode=${stitchColMode}`;
+const jitUrl    = (mid) => `https://cdn.jwplayer.com/v2/sites/${currentSiteId}/media/${mid}/ssai.m3u8?ad_config_id=${currentAdConfigId}&stitch_mode=${jitColMode}`;
 
 // Stream time_offsets from live API: 0, 29.6, 139.2s (confirmed from /info.json)
 // Each break is 9.6s. Triggers fire 2.5s before each break for the JIT animation.
@@ -2147,7 +2147,9 @@ async function startSessionTracking(mode, sessionId, sessionInfoUrl) {
       const data = await loadSessionInfo(sessionId, sessionInfoUrls[mode]);
       renderSessionPanel(mode, data);
     };
-    await poll();
+    // Initial fetch always runs (video hasn't started yet — paused check would block it)
+    const initData = await loadSessionInfo(sessionId, sessionInfoUrls[mode]);
+    renderSessionPanel(mode, initData);
     pollTimers[mode] = setInterval(poll, TIMING.SESSION_POLL_MS);
   } else {
     sidEl.textContent = 'session (simulated)';
