@@ -1039,8 +1039,8 @@ const _urlMode = new URLSearchParams(window.location.search).get('stitch_mode');
 const stitchColMode = _urlMode === 'jit'  ? 'jit'  : 'ssai';
 const jitColMode    = _urlMode === 'ssai' ? 'ssai' : 'jit';
 
-const stitchUrl = (mid) => `https://cdn.jwplayer.com/v2/sites/${currentSiteId}/media/${mid}/ssai.m3u8?ad_config_id=${currentAdConfigId}&stitch_mode=${stitchColMode}`;
-const jitUrl    = (mid) => `https://cdn.jwplayer.com/v2/sites/${currentSiteId}/media/${mid}/ssai.m3u8?ad_config_id=${currentAdConfigId}&stitch_mode=${jitColMode}`;
+const stitchUrl = (mid) => `https://cdn.jwplayer.com/v2/sites/${currentSiteId}/media/${mid}/ssai.m3u8?ad_config_id=${currentAdConfigId}&stitch_mode=${stitchColMode}&reporting_mode=client`;
+const jitUrl    = (mid) => `https://cdn.jwplayer.com/v2/sites/${currentSiteId}/media/${mid}/ssai.m3u8?ad_config_id=${currentAdConfigId}&stitch_mode=${jitColMode}&reporting_mode=client`;
 
 // Stream time_offsets from live API: 0, 29.6, 139.2s (confirmed from /info.json)
 // Each break is 9.6s. Triggers fire 2.5s before each break for the JIT animation.
@@ -1078,6 +1078,8 @@ const streamDurations  = { stitch: null, jit: null }; // total stream duration f
 const lastSessionData  = { stitch: null, jit: null }; // cached to retry buildTimeline on LEVEL_LOADED
 const ssaiModes       = { stitch: null, jit: null }; // decoded x-jw-ssai-strategy-action per player
 const manifestUrls    = { stitch: null, jit: null }; // active manifest URL per player
+const dzContexts      = {};                           // Datazoom collector context per player
+const beaconsFired    = { stitch: {}, jit: {} };      // fired-beacon guard: "bi:ai:type" → true
 const jitFillerSkipped  = [false, false, false];     // JIT: filler-skip fired per break
 const lastBreakInfo     = { stitch: null, jit: null };// last fetched break-level JSON per column
 const breakInfoFetched  = {                           // per-break fetch guard (both columns)
@@ -1229,13 +1231,21 @@ async function resolveManifest(manifestUrl) {
 }
 
 async function loadSessionInfo(sessionId, directUrl) {
-  // Prefer the direct URL from the manifest header (avoids guessing the host)
+  // Prefer the direct URL from the manifest header (avoids guessing the host).
+  // Append reporting_mode=client so the response includes client-side beacon URLs.
+  const withReportingMode = url => {
+    try {
+      const u = new URL(url);
+      u.searchParams.set('reporting_mode', 'client');
+      return u.href;
+    } catch (_) { return url + (url.includes('?') ? '&' : '?') + 'reporting_mode=client'; }
+  };
   const candidates = directUrl
-    ? [directUrl]
+    ? [withReportingMode(directUrl)]
     : [
-        `https://cdn.jwplayer.com/v2/sites/${currentSiteId}/media/${currentMediaId}/ssai_session/${sessionId}/info.json`,
-        `https://ssai.jwplayer.com/v2/sites/${currentSiteId}/media/${currentMediaId}/ssai_session/${sessionId}/info.json`,
-        `https://ssai-jit.jwplayer.com/v2/sites/${currentSiteId}/media/${currentMediaId}/ssai_session/${sessionId}/info.json`,
+        withReportingMode(`https://cdn.jwplayer.com/v2/sites/${currentSiteId}/media/${currentMediaId}/ssai_session/${sessionId}/info.json`),
+        withReportingMode(`https://ssai.jwplayer.com/v2/sites/${currentSiteId}/media/${currentMediaId}/ssai_session/${sessionId}/info.json`),
+        withReportingMode(`https://ssai-jit.jwplayer.com/v2/sites/${currentSiteId}/media/${currentMediaId}/ssai_session/${sessionId}/info.json`),
       ];
   for (const url of candidates) {
     try {
@@ -1271,6 +1281,18 @@ function initPlayer(id, url) {
     hls.loadSource(url);
     hls.attachMedia(video);
     hlsInstances[id] = hls;
+
+    // Datazoom collector — bind to this HLS.js instance for QoE + ad analytics.
+    // createContext accepts the HLS.js instance directly per the HLS.js player extension API.
+    if (typeof datazoom !== 'undefined') {
+      try {
+        if (dzContexts[id]) { try { dzContexts[id].destroy(); } catch(_) {} }
+        dzContexts[id] = datazoom.createContext(hls);
+        console.debug(`[Datazoom] context created for "${id}"`);
+      } catch (e) {
+        console.warn('[Datazoom] createContext failed:', e.message);
+      }
+    }
 
     hls.on(Hls.Events.ERROR, (_, data) => {
       if (data.fatal) console.error(`[${id}] HLS fatal error:`, data.type, data.details);
@@ -1380,6 +1402,7 @@ function initPlayer(id, url) {
       }
       checkBreakApproach(id, video.currentTime);
       checkImpressions(id, video.currentTime);
+      checkBeacons(id, video.currentTime);
     }
   });
 
@@ -1497,6 +1520,71 @@ function checkImpressions(mode, t) {
       updateRenderBar(mode);
       if (mode === 'jit') renderSessionPanel('jit');
     }
+  });
+}
+
+/* ============================================================
+   CLIENT-SIDE BEACONING  (MediaTailor / Datazoom)
+   Fires tracking pixels from beacon URLs embedded in session data
+   when reporting_mode=client is active on the session endpoint.
+   Supports both JW/MediaTailor object format:
+     ad.tracking_events.impression = ["https://..."]
+   and the array format from the tracking URL:
+     ad.trackingEvents = [{ eventType, StartTimeInSeconds, beaconUrls }]
+   ============================================================ */
+function fireBeacon(url) {
+  if (!url) return;
+  try {
+    // sendBeacon keeps the request alive past page unload; fall back to no-cors fetch
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(url);
+    } else {
+      fetch(url, { mode: 'no-cors', keepalive: true }).catch(() => {});
+    }
+    console.debug('[Beacons] ▶', url);
+  } catch (e) {
+    console.warn('[Beacons] failed:', url, e.message);
+  }
+}
+
+function checkBeacons(mode, t) {
+  const breaks = getBreaks(mode);
+  if (!breaks.length) return;
+  breaks.forEach((b, bi) => {
+    const ads = Array.isArray(b.ads) ? b.ads : [];
+    let adStart = b.time_offset || 0;
+    ads.forEach((ad, ai) => {
+      const dur    = ad.duration || 0;
+      // Support both formats for tracking events
+      const evtObj = ad.tracking_events || ad.trackingEvents || ad.tracking || {};
+      const getUrls = (type) => {
+        if (Array.isArray(evtObj)) {
+          // Array format: [{ eventType, beaconUrls }]
+          return evtObj.find(e => e.eventType === type)?.beaconUrls || [];
+        }
+        // Object format: { impression: [...], firstQuartile: [...] }
+        return evtObj[type] || [];
+      };
+
+      const check = (type, time) => {
+        if (t < time) return;
+        const key = `${bi}:${ai}:${type}`;
+        if (beaconsFired[mode][key]) return;
+        const urls = getUrls(type);
+        if (!urls.length) return; // nothing to fire for this event
+        beaconsFired[mode][key] = true;
+        urls.forEach(fireBeacon);
+      };
+
+      check('impression',    adStart);
+      check('start',         adStart);
+      check('firstQuartile', adStart + dur * 0.25);
+      check('midpoint',      adStart + dur * 0.50);
+      check('thirdQuartile', adStart + dur * 0.75);
+      check('complete',      adStart + dur - 0.25); // 250 ms lookahead
+
+      adStart += dur;
+    });
   });
 }
 
@@ -2012,6 +2100,8 @@ async function startSessionTracking(mode, sessionId, sessionInfoUrl) {
     if (tagEl) tagEl.textContent = sessionId;
 
     const poll = async () => {
+      const video = document.getElementById(`vid-${mode}`);
+      if (video?.paused) return; // skip while playback is paused
       const data = await loadSessionInfo(sessionId, sessionInfoUrls[mode]);
       renderSessionPanel(mode, data);
     };
@@ -2052,6 +2142,13 @@ document.getElementById('btnReset').addEventListener('click', teardownAll);
    MEDIA CHOOSER
    ============================================================ */
 function teardownMode(id) {
+  // Destroy Datazoom context before HLS instance
+  if (dzContexts[id]) {
+    try { dzContexts[id].destroy(); } catch (_) {}
+    delete dzContexts[id];
+  }
+  beaconsFired[id] = {};
+
   if (hlsInstances[id]) { hlsInstances[id].destroy(); delete hlsInstances[id]; }
   sessions[id] = null; sessionInfoUrls[id] = null; streamDurations[id] = null; lastSessionData[id] = null;
 
@@ -2171,6 +2268,7 @@ function teardownAll() {
   document.getElementById('stitch-rp').style.color      = '#E74C3C';
   breakTimingsUpdated = false;
   highWaterMark.stitch = 0; highWaterMark.jit = 0;
+  beaconsFired.stitch = {}; beaconsFired.jit = {};
   ssaiModes.stitch = null; ssaiModes.jit = null;
   mediaHostingType = null;
   const hostBadge = document.getElementById('hosting-badge');
@@ -2259,6 +2357,24 @@ document.getElementById('loadDefaultsLink').addEventListener('click', () => {
   resetToDefaults();
   loadMedia(DEFAULTS.mediaId);
 });
+
+/* ============================================================
+   DATAZOOM LOADER
+   Loads the Datazoom JS Collector only when a configuration_id
+   is provided via the ?datazoom_config= URL parameter.
+   Obtain your configuration_id from app.datazoom.io.
+   Example: index.html?datazoom_config=abc123...
+   ============================================================ */
+(function loadDatazoom() {
+  const cfgId = new URLSearchParams(window.location.search).get('datazoom_config');
+  if (!cfgId) return;
+  const s = document.createElement('script');
+  s.src   = `https://platform.datazoom.io/beacon/v1/config?configuration_id=${encodeURIComponent(cfgId)}`;
+  s.async = true;
+  s.onload  = () => console.info('[Datazoom] collector loaded (config:', cfgId, ')');
+  s.onerror = () => console.warn('[Datazoom] failed to load collector script');
+  document.head.appendChild(s);
+})();
 
 /* ============================================================
    BOOT
