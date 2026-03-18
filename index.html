@@ -2147,9 +2147,18 @@ async function startSessionTracking(mode, sessionId, sessionInfoUrl) {
       const data = await loadSessionInfo(sessionId, sessionInfoUrls[mode]);
       renderSessionPanel(mode, data);
     };
-    // Initial fetch always runs (video hasn't started yet — paused check would block it)
-    const initData = await loadSessionInfo(sessionId, sessionInfoUrls[mode]);
-    renderSessionPanel(mode, initData);
+
+    // Initial load: retry up to 5× (1 s apart) regardless of play state —
+    // info.json may not be ready immediately after the manifest loads.
+    const waitAndLoad = async () => {
+      for (let attempt = 0; attempt < 5; attempt++) {
+        if (attempt > 0) await new Promise(r => setTimeout(r, 1000));
+        if (!sessions[mode]) return; // torn down between retries
+        const data = await loadSessionInfo(sessionId, sessionInfoUrls[mode]);
+        if (data) { renderSessionPanel(mode, data); return; }
+      }
+    };
+    waitAndLoad();
     pollTimers[mode] = setInterval(poll, TIMING.SESSION_POLL_MS);
   } else {
     sidEl.textContent = 'session (simulated)';
