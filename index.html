@@ -712,8 +712,11 @@
       <span class="media-label">Ad Config</span>
       <span class="media-val" id="view-adConfig">LIvxq0u2</span>
       <span class="media-sep">·</span>
-      <span class="media-label">Media</span>
-      <span class="media-val" id="view-mediaTitle">jUnzhbbH</span>
+      <span class="media-label">Media ID</span>
+      <span class="media-val" id="view-mediaId">jUnzhbbH</span>
+      <span class="media-sep">·</span>
+      <span class="media-label">Title</span>
+      <span class="media-val" id="view-mediaTitle">—</span>
       <span id="hosting-badge" class="meta-badge" style="display:none"></span>
       <button class="media-edit-btn" onclick="setMediaEditMode(true)">✏ Edit</button>
     </div>
@@ -1220,9 +1223,7 @@ async function fetchMediaInfo(mid) {
     const title = item.title || item.name || '';
     if (title) localStorage.setItem(`jit-media-title:${mid}`, title);
     const mediaTitleEl = document.getElementById('view-mediaTitle');
-    if (mediaTitleEl) {
-      mediaTitleEl.textContent = title ? `${title} (${mid})` : mid;
-    }
+    if (mediaTitleEl) mediaTitleEl.textContent = title || '—';
     // JW-hosted: served from JW CDN domains
     const isHosted = /\.(jwplatform|jwpcdn|jwplayer)\.com\//i.test(src) ||
                      /content\.jwplatform\.com/i.test(src) ||
@@ -2336,8 +2337,9 @@ function saveCookieSettings() {
 function syncMediaViewSpans() {
   document.getElementById('view-adConfig').textContent = document.getElementById('adConfigInput').value;
   const mid = document.getElementById('mediaIdInput').value;
+  document.getElementById('view-mediaId').textContent   = mid;
   const cached = localStorage.getItem(`jit-media-title:${mid}`);
-  document.getElementById('view-mediaTitle').textContent = cached ? `${cached} (${mid})` : mid;
+  document.getElementById('view-mediaTitle').textContent = cached || '—';
 }
 function setMediaEditMode(editing) {
   document.getElementById('media-view').style.display = editing ? 'none' : 'flex';
